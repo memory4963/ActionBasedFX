@@ -23,11 +23,11 @@ def read_data(path: str):
         for name in files:
             file_path = os.path.join(root, name)
             file_data = np.loadtxt(file_path, np.float32)
-            for batch in range(60, file_data.shape[0], 60):
+            for batch in range(batch_size, file_data.shape[0], batch_interval):
                 # label
                 label_temp = np.append(label_temp, get_type(name))
                 # data
-                skeleton_temp = np.concatenate((skeleton_temp, file_data[batch - 60:batch, :]), axis=0)
+                skeleton_temp = np.concatenate((skeleton_temp, file_data[batch - batch_size:batch, :]), axis=0)
     labels = label_temp[1:]
     skeleton = skeleton_temp[1:, :]
     return skeleton, labels
