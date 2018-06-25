@@ -21,27 +21,24 @@ def read_data(path: str):
     skeleton_temp = np.ones(shape=(1, 36), dtype=np.float32)
 
     # 1 3 9 12 现共4类，之后增加
-    def a1():
-        return 0
-
-    def a3():
-        return 1
-
-    def a9():
-        return 2
-
-    def a12():
-        return 3
-
-    selector = {1: a1(), 3: a3(), 9: a9(), 12: a12()}
-
     for root, dirs, files in os.walk(path):
         for name in files:
             file_path = os.path.join(root, name)
             file_data = np.loadtxt(file_path, np.float32)
             for batch in range(batch_size, file_data.shape[0], batch_interval):
                 # label
-                label_temp = np.append(label_temp, selector(get_type(name)))
+                type_num = get_type(name)
+                if type_num == 1:
+                    label_temp = np.append(label_temp, 0)
+                elif type_num == 3:
+                    label_temp = np.append(label_temp, 1)
+                elif type_num == 9:
+                    label_temp = np.append(label_temp, 2)
+                elif type_num == 12:
+                    label_temp = np.append(label_temp, 3)
+                else:
+                    print("unexpected label type " + name)
+                    exit(1)
                 # data
                 skeleton_temp = np.concatenate((skeleton_temp, file_data[batch - batch_size:batch, :]), axis=0)
     labels = label_temp[1:]
