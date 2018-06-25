@@ -49,7 +49,7 @@ layer_num = 2
 class_num = 4
 
 with tf.device('/device:GPU:' + str(start_gpu)):
-    x = tf.placeholder(tf.float32, [None, timestep_size, input_data])
+    x = tf.placeholder(tf.float32, [None, timestep_size, input_size])
     label = tf.placeholder(tf.int64, [None, class_num])
     keep_prob = tf.placeholder(tf.float32, [])
 
@@ -57,7 +57,7 @@ with tf.device('/device:GPU:' + str(start_gpu)):
     lstm_cell = rnn.DropoutWrapper(cell=lstm_cell, input_keep_prob=1.0, output_keep_prob=keep_prob)
     mlstm_cell = rnn.MultiRNNCell([lstm_cell] * layer_num, state_is_tuple=True)
     init_state = mlstm_cell.zero_state(batch_size, tf.float32)
-
+ 
     outputs, state = tf.nn.dynamic_rnn(mlstm_cell, inputs=x, initial_state=init_state, time_major=False)
     h_state = outputs[:, -1, :]
 
