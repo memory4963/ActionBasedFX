@@ -48,7 +48,7 @@ layer_num = 2
 # 输出class数量
 class_num = 4
 
-with tf.device('/device:GPU:'+start_gpu):
+with tf.device('/device:GPU:' + str(start_gpu)):
     x = tf.placeholder(tf.float32, [None, timestep_size, input_data])
     label = tf.placeholder(tf.int64, [None, class_num])
     keep_prob = tf.placeholder(tf.float32, [])
@@ -87,7 +87,7 @@ for i in range(1000):
         print("train step %d, accuracy: %d" % i, train_accuracy)
     if i + 1 % 100 == 0:
         # save
-        saver.save(sess, "/home/luoao/openpose/models/model_" + i + ".ckpt")
+        saver.save(sess, "/home/luoao/openpose/models/model_" + str(i) + ".ckpt")
     sess.run(optimizer, feed_dict={
         x: train_batch, label: train_labels,
         keep_prob: 1.0, batch_size: skeleton.shape[0]
