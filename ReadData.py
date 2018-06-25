@@ -24,7 +24,7 @@ def read_data(path: str):
     for root, dirs, files in os.walk(path):
         for index, name in enumerate(files):
             file_path = os.path.join(root, name)
-            print("file count: " + index + " / " + len(files))
+            print("file count: " + str(index) + " / " + str(len(files)))
             file_data = np.loadtxt(file_path, np.float32)
             for batch in range(batch_size, file_data.shape[0], batch_interval):
                 # label
