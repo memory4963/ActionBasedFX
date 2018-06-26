@@ -25,7 +25,9 @@ if len(sys.argv) > 1:
             print("LSTM.py --start_gpu <num> --gpu_num <num>")
             sys.exit(2)
 
-config = tf.ConfigProto(allow_soft_placement=True)
+config = tf.ConfigProto(
+    # allow_soft_placement=True
+    )
 config.gpu_options.allow_growth = True
 sess = tf.Session(config=config)
 
@@ -54,27 +56,27 @@ def make_lstm():
     return rnn.DropoutWrapper(cell=lstm_cell, input_keep_prob=1.0, output_keep_prob=keep_prob)
 
 
-with tf.device('/device:GPU:' + str(start_gpu)):
-    x = tf.placeholder(tf.float32, [None, timestep_size, input_size])
-    label = tf.placeholder(tf.float32, [None, class_num])
-    keep_prob = tf.placeholder(tf.float32, [])
+# with tf.device('/device:GPU:' + str(start_gpu)):
+x = tf.placeholder(tf.float32, [None, timestep_size, input_size])
+label = tf.placeholder(tf.float32, [None, class_num])
+keep_prob = tf.placeholder(tf.float32, [])
 
-    mlstm_cell = rnn.MultiRNNCell([make_lstm() for _ in range(layer_num)], state_is_tuple=True)
-    init_state = mlstm_cell.zero_state(batch_size, tf.float32)
+mlstm_cell = rnn.MultiRNNCell([make_lstm() for _ in range(layer_num)], state_is_tuple=True)
+init_state = mlstm_cell.zero_state(batch_size, tf.float32)
 
-    outputs, state = tf.nn.dynamic_rnn(mlstm_cell, inputs=x, initial_state=init_state, time_major=False)
-    h_state = outputs[:, -1, :]
+outputs, state = tf.nn.dynamic_rnn(mlstm_cell, inputs=x, initial_state=init_state, time_major=False)
+h_state = outputs[:, -1, :]
 
-    # softmax
-    weights = tf.Variable(tf.truncated_normal([hidden_size, class_num], stddev=0.1), dtype=tf.float32)
-    bias = tf.Variable(tf.constant(0.1), dtype=tf.float32)
-    y = tf.nn.softmax(tf.matmul(h_state, weights) + bias)
+# softmax
+weights = tf.Variable(tf.truncated_normal([hidden_size, class_num], stddev=0.1), dtype=tf.float32)
+bias = tf.Variable(tf.constant(0.1), dtype=tf.float32)
+y = tf.nn.softmax(tf.matmul(h_state, weights) + bias)
 
-    cross_entropy = -tf.reduce_mean(label * tf.log(y))
-    optimizer = tf.train.AdamOptimizer(lr).minimize(cross_entropy)
+cross_entropy = -tf.reduce_mean(label * tf.log(y))
+optimizer = tf.train.AdamOptimizer(lr).minimize(cross_entropy)
 
-    correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(label, 1))
-    accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(label, 1))
+accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 
 sess.run(tf.global_variables_initializer())
 saver = tf.train.Saver()
