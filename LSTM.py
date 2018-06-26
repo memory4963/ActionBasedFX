@@ -48,16 +48,20 @@ layer_num = 2
 # 输出class数量
 class_num = 4
 
+
+def make_lstm():
+    lstm_cell = rnn.BasicLSTMCell(num_units=hidden_size, forget_bias=1.0, state_is_tuple=True)
+    return rnn.DropoutWrapper(cell=lstm_cell, input_keep_prob=1.0, output_keep_prob=keep_prob)
+
+
 with tf.device('/device:GPU:' + str(start_gpu)):
     x = tf.placeholder(tf.float32, [None, timestep_size, input_size])
     label = tf.placeholder(tf.int64, [None, class_num])
     keep_prob = tf.placeholder(tf.float32, [])
 
-    lstm_cell = rnn.BasicLSTMCell(num_units=hidden_size, forget_bias=1.0, state_is_tuple=True)
-    lstm_cell = rnn.DropoutWrapper(cell=lstm_cell, input_keep_prob=1.0, output_keep_prob=keep_prob)
-    mlstm_cell = rnn.MultiRNNCell([lstm_cell] * layer_num, state_is_tuple=True)
+    mlstm_cell = rnn.MultiRNNCell([make_lstm() for _ in range(layer_num)], state_is_tuple=True)
     init_state = mlstm_cell.zero_state(batch_size, tf.float32)
- 
+
     outputs, state = tf.nn.dynamic_rnn(mlstm_cell, inputs=x, initial_state=init_state, time_major=False)
     h_state = outputs[:, -1, :]
 
