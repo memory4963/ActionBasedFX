@@ -16,7 +16,9 @@ def get_type(name: str):
 
 def read_data(path: str):
     if os.path.exists(path + "/skeleton.npy") and os.path.exists(path + "/labels.npy"):
-        return np.load(path + "/skeleton.npy"), np.load(path + "/labels.npy")
+        labels = np.load(path + "/labels.npy")
+        labels = np.eye(np.max(labels) + 1)[labels]
+        return np.load(path + "/skeleton.npy"), labels
 
     # label array: 1-dim array, every num reflects to 60 lines in action array. [-1]
     label_temp = np.array([1])
@@ -50,5 +52,5 @@ def read_data(path: str):
     skeleton = skeleton.reshape([-1, 60, 36])
     np.save(path + "/skeleton.npy", skeleton)
     np.save(path + "/labels.npy", labels)
-
+    labels = np.eye(np.max(labels) + 1)[labels]
     return skeleton, labels

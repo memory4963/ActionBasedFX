@@ -92,7 +92,6 @@ for i in range(1000):
     if i + 1 % 100 == 0:
         # save
         saver.save(sess, "/home/luoao/openpose/models/model_" + str(i) + ".ckpt")
-    print(x.shape, skeleton.shape, label.shape, labels.shape)
     sess.run(optimizer, feed_dict={
         x: skeleton, label: labels,
         keep_prob: 1.0, batch_size: skeleton.shape[0]
