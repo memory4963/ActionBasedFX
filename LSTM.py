@@ -25,7 +25,7 @@ if len(sys.argv) > 1:
             print("LSTM.py --start_gpu <num> --gpu_num <num>")
             sys.exit(2)
 
-config = tf.ConfigProto()
+config = tf.ConfigProto(allow_soft_placement=True)
 config.gpu_options.allow_growth = True
 sess = tf.Session(config=config)
 
@@ -56,7 +56,7 @@ def make_lstm():
 
 with tf.device('/device:GPU:' + str(start_gpu)):
     x = tf.placeholder(tf.float32, [None, timestep_size, input_size])
-    label = tf.placeholder(tf.int64, [None, class_num])
+    label = tf.placeholder(tf.float32, [None, class_num])
     keep_prob = tf.placeholder(tf.float32, [])
 
     mlstm_cell = rnn.MultiRNNCell([make_lstm() for _ in range(layer_num)], state_is_tuple=True)
@@ -74,7 +74,7 @@ with tf.device('/device:GPU:' + str(start_gpu)):
     optimizer = tf.train.AdamOptimizer(lr).minimize(cross_entropy)
 
     correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(label, 1))
-    accuracy = tf.reduce_mean(tf.cast(correct_prediction), "float")
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 
 sess.run(tf.global_variables_initializer())
 saver = tf.train.Saver()
@@ -92,7 +92,8 @@ for i in range(1000):
     if i + 1 % 100 == 0:
         # save
         saver.save(sess, "/home/luoao/openpose/models/model_" + str(i) + ".ckpt")
+    print(x.shape, skeleton.shape, label.shape, labels.shape)
     sess.run(optimizer, feed_dict={
-        x: train_batch, label: train_labels,
+        x: skeleton, label: labels,
         keep_prob: 1.0, batch_size: skeleton.shape[0]
     })
