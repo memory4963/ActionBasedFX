@@ -5,7 +5,7 @@ batch_size = 60
 batch_interval = 30
 
 
-def get_type(name: str):
+def get_type(name):
     index = name.find("a")
     try:
         int(name[index + 2:index + 3])
@@ -14,7 +14,7 @@ def get_type(name: str):
         return int(name[index + 1:index + 2])
 
 
-def read_data(path: str):
+def read_data(path):
     if os.path.exists(path + "/skeleton.npy") and os.path.exists(path + "/labels.npy"):
         labels = np.load(path + "/labels.npy")
         labels = np.eye(np.max(labels) + 1)[labels]
@@ -25,7 +25,7 @@ def read_data(path: str):
     # action array: 60 lines for each action data. [-1, 60, 36]
     skeleton_temp = np.ones(shape=(1, 36), dtype=np.float32)
 
-    # 1 3 9 12 
+    # 1 3 9 12
     for root, dirs, files in os.walk(path):
         for index, name in enumerate(files):
             file_path = os.path.join(root, name)
