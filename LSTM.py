@@ -41,18 +41,18 @@ sess = tf.Session(config=config)
 
 skeleton, labels = ReadData.read_data("/home/luoao/openpose/dataset/simpleOutput")
 
-# 学习速率
+# learning rate
 lr = 1e-3
 batch_size = tf.placeholder(tf.int32, [])
-# 每帧36个数
+# 36 per frame
 input_size = 36
-# 每个batch60帧
+# 60 frame per batch
 timestep_size = ReadData.batch_size
-# 每个隐藏层节点数
+
 hidden_size = 256
-# LSTM layer数
+# LSTM layer num
 layer_num = 2
-# 输出class数量
+# output num
 class_num = 4
 
 

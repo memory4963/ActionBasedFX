@@ -25,7 +25,7 @@ def read_data(path: str):
     # action array: 60 lines for each action data. [-1, 60, 36]
     skeleton_temp = np.ones(shape=(1, 36), dtype=np.float32)
 
-    # 1 3 9 12 现共4类，之后增加
+    # 1 3 9 12 
     for root, dirs, files in os.walk(path):
         for index, name in enumerate(files):
             file_path = os.path.join(root, name)
