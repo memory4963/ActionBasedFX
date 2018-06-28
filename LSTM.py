@@ -87,19 +87,26 @@ saver = tf.train.Saver()
 
 _batch_size = 32
 for i in range(1000):
-    if i + 1 % 10 == 0:
+    if (i + 1) % 10 == 0:
         # test accuracy
         train_accuracy = sess.run(accuracy, feed_dict={
             x: train_batch, label: train_labels,
             keep_prob: 1.0, batch_size: _batch_size
         })
         print("train step %d, accuracy: %d" % i, train_accuracy)
-    if i + 1 % 100 == 0:
+    if (i + 1) % 100 == 0:
         # save
         saver.save(sess, "/home/luoao/openpose/models/model_" + str(i) + ".ckpt")
     for j in range(skeleton.shape[0] / _batch_size):
         train_batch = skeleton[j * _batch_size:j * _batch_size + _batch_size, :, :]
         train_labels = labels[j * _batch_size:j * _batch_size + _batch_size]
+        if (j + 1) % 10 == 0:
+            # test accuracy
+            train_accuracy = sess.run(accuracy, feed_dict={
+                x: train_batch, label: train_labels,
+                keep_prob: 1.0, batch_size: _batch_size
+            })
+            print("train step %d, accuracy: %.3f" % (j, train_accuracy))
         sess.run(optimizer, feed_dict={
             x: train_batch, label: train_labels,
             keep_prob: 0.5, batch_size: _batch_size
