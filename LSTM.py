@@ -32,7 +32,7 @@ for i in range(gpu_num - 1):
 
 os.environ["CUDA_VISIBLE_DEVICES"] = visiable_devices
 
-config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=True)
+config = tf.ConfigProto(allow_soft_placement=True)
 config.gpu_options.allow_growth = True
 sess = tf.Session(config=config)
 
@@ -87,8 +87,8 @@ saver = tf.train.Saver()
 
 for i in range(1000):
     _batch_size = 32
-    train_batch = skeleton[i * 32:i * 32 + 32, :, :]
-    train_labels = labels[i * 32:i * 32 + 32]
+    train_batch = skeleton[i * _batch_size:i * _batch_size + _batch_size, :, :]
+    train_labels = labels[i * _batch_size:i * _batch_size + _batch_size]
     if i + 1 % 10 == 0:
         # test accuracy
         train_accuracy = sess.run(accuracy, feed_dict={
