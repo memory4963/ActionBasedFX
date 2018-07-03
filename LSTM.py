@@ -56,6 +56,19 @@ layer_num = 2
 class_num = 4
 
 
+def variable_summaries(var):
+  """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
+  with tf.name_scope('summaries'):
+    mean = tf.reduce_mean(var)
+    tf.summary.scalar('mean', mean)
+    with tf.name_scope('stddev'):
+      stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
+    tf.summary.scalar('stddev', stddev)
+    tf.summary.scalar('max', tf.reduce_max(var))
+    tf.summary.scalar('min', tf.reduce_min(var))
+    tf.summary.histogram('histogram', var)
+
+
 def make_lstm():
     lstm_cell = rnn.BasicLSTMCell(num_units=hidden_size, forget_bias=1.0, state_is_tuple=True)
     return rnn.DropoutWrapper(cell=lstm_cell, input_keep_prob=1.0, output_keep_prob=keep_prob)
@@ -65,22 +78,39 @@ x = tf.placeholder(tf.float32, [None, timestep_size, input_size])
 label = tf.placeholder(tf.float32, [None, class_num])
 keep_prob = tf.placeholder(tf.float32, [])
 
-mlstm_cell = rnn.MultiRNNCell([make_lstm() for _ in range(layer_num)], state_is_tuple=True)
+with tf.name_scope("lstm_cell"):
+    mlstm_cell = rnn.MultiRNNCell([make_lstm() for _ in range(layer_num)], state_is_tuple=True)
 init_state = mlstm_cell.zero_state(batch_size, tf.float32)
 
 outputs, state = tf.nn.dynamic_rnn(mlstm_cell, inputs=x, initial_state=init_state, time_major=False)
-h_state = outputs[:, -1, :]
+with tf.name_scope("hidden_state"):
+    h_state = outputs[:, -1, :]
 
 # softmax
-weights = tf.Variable(tf.truncated_normal([hidden_size, class_num], stddev=0.1), dtype=tf.float32)
-bias = tf.Variable(tf.constant(0.1), dtype=tf.float32)
+with tf.name_scope("weights"):
+    weights = tf.Variable(tf.truncated_normal([hidden_size, class_num], stddev=0.1), dtype=tf.float32)
+    variable_summaries(weights)
+with tf.name_scope("bias"):
+    bias = tf.Variable(tf.constant(0.1), dtype=tf.float32)
+    variable_summaries(bias)
 y = tf.nn.softmax(tf.matmul(h_state, weights) + bias)
 
-cross_entropy = -tf.reduce_mean(label * tf.log(y))
-optimizer = tf.train.AdamOptimizer(lr).minimize(cross_entropy)
+with tf.name_scope("total"):
+    cross_entropy = -tf.reduce_mean(label * tf.log(y))
+tf.summary.scalar('cross_entropy', cross_entropy)
 
-correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(label, 1))
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+with tf.name_scope('train'):
+    optimizer = tf.train.AdamOptimizer(lr).minimize(cross_entropy)
+with tf.name_scope('accuracy'):
+    with tf.name_scope('correct_prediction'):
+        correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(label, 1))
+    with tf.name_scope('accuracy'):
+        accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+tf.summary.scalar('accuracy', accuracy)
+
+merged = tf.summary.merge_all()
+train_writer = tf.summary.FileWriter("/home/luoao/openpose/models/train", sess.graph)
+test_writer = tf.summary.FileWriter("/home/luoao/openpose/models/test")
 
 sess.run(tf.global_variables_initializer())
 saver = tf.train.Saver()
@@ -89,25 +119,21 @@ _batch_size = 32
 for i in range(1000):
     if (i + 1) % 10 == 0:
         # test accuracy
-        train_accuracy = sess.run(accuracy, feed_dict={
+        summary, train_accuracy = sess.run([merged, accuracy], feed_dict={
             x: train_batch, label: train_labels,
             keep_prob: 1.0, batch_size: _batch_size
         })
-        print("train step %d, accuracy: %d" % i, train_accuracy)
+        test_writer.add_summary(summary, i * 1000)
+        print("train step %d, accuracy: %d" % (i, train_accuracy))
     if (i + 1) % 100 == 0:
         # save
         saver.save(sess, "/home/luoao/openpose/models/model_" + str(i) + ".ckpt")
     for j in range(skeleton.shape[0] / _batch_size):
         train_batch = skeleton[j * _batch_size:j * _batch_size + _batch_size, :, :]
         train_labels = labels[j * _batch_size:j * _batch_size + _batch_size]
-        if (j + 1) % 10 == 0:
-            # test accuracy
-            train_accuracy = sess.run(accuracy, feed_dict={
-                x: train_batch, label: train_labels,
-                keep_prob: 1.0, batch_size: _batch_size
-            })
-            print("train step %d, accuracy: %.3f" % (j, train_accuracy))
-        sess.run(optimizer, feed_dict={
+        summary, _ = sess.run([merged, optimizer], feed_dict={
             x: train_batch, label: train_labels,
             keep_prob: 0.5, batch_size: _batch_size
         })
+        if (j + 1) % 100 == 0:
+            train_writer.add_summary(summary, i*1000+j)
