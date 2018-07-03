@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import os
 
@@ -26,7 +28,9 @@ def read_data(path):
     skeleton_temp = np.ones(shape=(1, 36), dtype=np.float32)
 
     # 1 3 9 12
-    for root, dirs, files in os.walk(path):
+    files = os.walk(path)
+    random.shuffle(files)
+    for root, dirs, files in files:
         for index, name in enumerate(files):
             file_path = os.path.join(root, name)
             print("file count: " + str(index) + " / " + str(len(files)))
