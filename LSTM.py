@@ -5,6 +5,8 @@ import sys
 import getopt
 import os
 
+os.environ['LD_LIBRARY_PATH'] = ':/usr/local/cuda/lib64'
+
 start_gpu = 0
 gpu_num = 1
 _batch_size = 32
