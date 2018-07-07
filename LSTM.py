@@ -1,7 +1,5 @@
 import tensorflow as tf
-import numpy as np
 from tensorflow.contrib import rnn
-from tensorflow.examples.tutorials.mnist import input_data
 import ReadData
 import sys
 import getopt
@@ -9,6 +7,7 @@ import os
 
 start_gpu = 0
 gpu_num = 1
+_batch_size = 32
 
 if len(sys.argv) > 1:
     # set params
@@ -22,6 +21,8 @@ if len(sys.argv) > 1:
             start_gpu = int(arg)
         elif opt == '--gpu_num':
             gpu_num = int(arg)
+        elif opt == '--batch_size':
+            _batch_size = int(arg)
         else:
             print("LSTM.py --start_gpu <num> --gpu_num <num>")
             sys.exit(2)
@@ -53,20 +54,20 @@ hidden_size = 256
 # LSTM layer num
 layer_num = 2
 # output num
-class_num = 4
+class_num = labels.shape[1]
 
 
 def variable_summaries(var):
-  """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
-  with tf.name_scope('summaries'):
-    mean = tf.reduce_mean(var)
-    tf.summary.scalar('mean', mean)
-    with tf.name_scope('stddev'):
-      stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
-    tf.summary.scalar('stddev', stddev)
-    tf.summary.scalar('max', tf.reduce_max(var))
-    tf.summary.scalar('min', tf.reduce_min(var))
-    tf.summary.histogram('histogram', var)
+    """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
+    with tf.name_scope('summaries'):
+        mean = tf.reduce_mean(var)
+        tf.summary.scalar('mean', mean)
+        with tf.name_scope('stddev'):
+            stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
+        tf.summary.scalar('stddev', stddev)
+        tf.summary.scalar('max', tf.reduce_max(var))
+        tf.summary.scalar('min', tf.reduce_min(var))
+        tf.summary.histogram('histogram', var)
 
 
 def make_lstm():
@@ -115,7 +116,6 @@ test_writer = tf.summary.FileWriter("/home/luoao/openpose/models/test")
 sess.run(tf.global_variables_initializer())
 saver = tf.train.Saver()
 
-_batch_size = 32
 for i in range(1000):
     if (i + 1) % 10 == 0:
         # test accuracy
@@ -136,4 +136,4 @@ for i in range(1000):
             keep_prob: 0.5, batch_size: _batch_size
         })
         if (j + 1) % 100 == 0:
-            train_writer.add_summary(summary, i*1000+j)
+            train_writer.add_summary(summary, i * 1000 + j)
