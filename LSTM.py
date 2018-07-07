@@ -8,11 +8,12 @@ import os
 start_gpu = 0
 gpu_num = 1
 _batch_size = 32
+dataset_size = 0 # zero means no limitation
 
 if len(sys.argv) > 1:
     # set params
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "", ["start_gpu=", "gpu_num=", "batch_size="])
+        opts, args = getopt.getopt(sys.argv[1:], "", ["start_gpu=", "gpu_num=", "batch_size=", "dataset_size="])
     except getopt.GetoptError:
         print("LSTM.py --start_gpu <num> --gpu_num <num>")
         sys.exit(2)
@@ -23,8 +24,10 @@ if len(sys.argv) > 1:
             gpu_num = int(arg)
         elif opt == '--batch_size':
             _batch_size = int(arg)
+        elif opt == '--dataset_size':
+            dataset_size = int(arg)
         else:
-            print("LSTM.py --start_gpu <num> --gpu_num <num>")
+            print("LSTM.py --start_gpu <num> --gpu_num <num> --batch_size <num> --dataset_size <num>")
             sys.exit(2)
 
 visiable_devices = str(start_gpu)
@@ -40,7 +43,7 @@ sess = tf.Session(config=config)
 # mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
 # print(type(mnist.train.images))
 
-skeleton, labels = ReadData.read_data("/home/luoao/openpose/dataset/simpleOutput")
+skeleton, labels = ReadData.read_data("/home/luoao/openpose/dataset/simpleOutput", dataset_size)
 
 # learning rate
 lr = 1e-2

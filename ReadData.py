@@ -16,7 +16,7 @@ def get_type(name):
         return int(name[index + 1:index + 2])
 
 
-def read_data(path):
+def read_data(path, size=0):
     if os.path.exists(path + "/skeleton.npy") and os.path.exists(path + "/labels.npy"):
         labels = np.load(path + "/labels.npy")
         labels = np.eye(np.max(labels) + 1)[labels]
@@ -35,6 +35,8 @@ def read_data(path):
             file_list.append([root, name])
     random.shuffle(file_list)
     for index, [root, name] in enumerate(file_list):
+        if size and index > size:
+            break
         print("file count: " + str(index) + " / " + str(len(file_list)))
         file_path = os.path.join(root, name)
         file_data = np.loadtxt(file_path, np.float32)
