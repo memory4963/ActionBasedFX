@@ -12,7 +12,7 @@ _batch_size = 32
 if len(sys.argv) > 1:
     # set params
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "", ["start_gpu=", "gpu_num="])
+        opts, args = getopt.getopt(sys.argv[1:], "", ["start_gpu=", "gpu_num=", "batch_size="])
     except getopt.GetoptError:
         print("LSTM.py --start_gpu <num> --gpu_num <num>")
         sys.exit(2)
@@ -43,7 +43,7 @@ sess = tf.Session(config=config)
 skeleton, labels = ReadData.read_data("/home/luoao/openpose/dataset/simpleOutput")
 
 # learning rate
-lr = 1e-3
+lr = 1e-2
 batch_size = tf.placeholder(tf.int32, [])
 # 36 per frame
 input_size = 36
@@ -92,7 +92,7 @@ with tf.name_scope("weights"):
     weights = tf.Variable(tf.truncated_normal([hidden_size, class_num], stddev=0.1), dtype=tf.float32)
     variable_summaries(weights)
 with tf.name_scope("bias"):
-    bias = tf.Variable(tf.constant(0.1), dtype=tf.float32)
+    bias = tf.Variable(tf.constant(0.1, shape=[batch_size, class_num]), dtype=tf.float32)
     variable_summaries(bias)
 y = tf.nn.softmax(tf.matmul(h_state, weights) + bias)
 
