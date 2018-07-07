@@ -1,11 +1,13 @@
+import os
+os.environ['LD_LIBRARY_PATH'] = ':/usr/local/cuda/lib64'
+
+
 import tensorflow as tf
 from tensorflow.contrib import rnn
 import ReadData
 import sys
 import getopt
-import os
 
-os.environ['LD_LIBRARY_PATH'] = ':/usr/local/cuda/lib64'
 
 start_gpu = 0
 gpu_num = 1
