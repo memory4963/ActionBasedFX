@@ -99,7 +99,7 @@ with tf.name_scope("weights"):
     weights = tf.Variable(tf.truncated_normal([hidden_size, class_num], stddev=0.1), dtype=tf.float32)
     variable_summaries(weights)
 with tf.name_scope("bias"):
-    bias = tf.Variable(tf.constant(0.1, shape=[batch_size, class_num]), dtype=tf.float32)
+    bias = tf.Variable(tf.constant(0.1, shape=[_batch_size, class_num]), dtype=tf.float32)
     variable_summaries(bias)
 y = tf.nn.softmax(tf.matmul(h_state, weights) + bias)
 
