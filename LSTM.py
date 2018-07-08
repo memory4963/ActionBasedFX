@@ -1,4 +1,6 @@
 import os
+from random import random
+
 os.environ['LD_LIBRARY_PATH'] = ':/usr/local/cuda/lib64'
 
 
@@ -124,17 +126,22 @@ sess.run(tf.global_variables_initializer())
 saver = tf.train.Saver()
 
 for i in range(1000):
-    if (i + 1) % 10 == 0:
+    if (i + 1) % 20 == 0:
         # test accuracy
+        j = int(float(i) / 1000 * skeleton.shape[0] / _batch_size + 0.5)
+        test_batch = skeleton[j * _batch_size:j * _batch_size + _batch_size, :, :]
+        test_labels = labels[j * _batch_size:j * _batch_size + _batch_size]
         summary, train_accuracy = sess.run([merged, accuracy], feed_dict={
-            x: train_batch, label: train_labels,
+            x: test_batch, label: test_labels,
             keep_prob: 1.0, batch_size: _batch_size
         })
-        test_writer.add_summary(summary, i * 1000)
+        test_writer.add_summary(summary, i * skeleton.shape[0] / _batch_size)
         print("train step %d, accuracy: %d" % (i, train_accuracy))
     if (i + 1) % 100 == 0:
         # save
         saver.save(sess, "/home/luoao/openpose/models/model_" + str(i) + ".ckpt")
+
+    train_test_int = random.randint(0, skeleton.shape[0] / _batch_size)
     for j in range(skeleton.shape[0] / _batch_size):
         train_batch = skeleton[j * _batch_size:j * _batch_size + _batch_size, :, :]
         train_labels = labels[j * _batch_size:j * _batch_size + _batch_size]
@@ -142,5 +149,5 @@ for i in range(1000):
             x: train_batch, label: train_labels,
             keep_prob: 0.5, batch_size: _batch_size
         })
-        if (j + 1) % 100 == 0:
-            train_writer.add_summary(summary, i * 1000 + j)
+        if j == train_test_int:
+            train_writer.add_summary(summary, i * skeleton.shape[0] / _batch_size + j)
