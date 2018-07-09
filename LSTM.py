@@ -150,7 +150,7 @@ for i in range(1000):
             keep_prob: 1.0, batch_size: _batch_size
         })
         test_writer.add_summary(summary, i * skeleton.shape[0] / _batch_size)
-        print("train step %d, accuracy: %d" % (i, train_accuracy))
+        print("train step %d, accuracy: %f" % (i, train_accuracy))
     if (i + 1) % 100 == 0:
         # save
         saver.save(sess, "/home/luoao/openpose/models/model_" + str(i) + ".ckpt")
