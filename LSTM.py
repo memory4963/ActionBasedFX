@@ -97,25 +97,25 @@ with tf.name_scope("hidden_state"):
     h_state = outputs[:, -1, :]
 # hidden layer * 2
 with tf.name_scope("full_weights1"):
-    full_weights1 = tf.Variable(tf.truncated_normal([hidden_size, hidden_size], stddev=0.1), dtype=tf.float32)
+    full_weights1 = tf.Variable(tf.truncated_normal([hidden_size, hidden_size / 4], stddev=1e-2), dtype=tf.float32)
     variable_summaries(full_weights1)
 with tf.name_scope("full_bias1"):
-    full_bias1 = tf.Variable(tf.constant(0.1, shape=[hidden_size]))
+    full_bias1 = tf.Variable(tf.constant(1e-2, shape=[hidden_size / 4]))
     variable_summaries(full_bias1)
 hidden = tf.nn.relu(tf.add(tf.matmul(h_state, full_weights1), full_bias1))
 with tf.name_scope("full_weights2"):
-    full_weights2 = tf.Variable(tf.truncated_normal([hidden_size, hidden_size], stddev=0.1), dtype=tf.float32)
+    full_weights2 = tf.Variable(tf.truncated_normal([hidden_size / 4, hidden_size / 16], stddev=1e-2), dtype=tf.float32)
     variable_summaries(full_weights2)
 with tf.name_scope("full_bias2"):
-    full_bias2 = tf.Variable(tf.constant(0.1, shape=[hidden_size]))
+    full_bias2 = tf.Variable(tf.constant(1e-2, shape=[hidden_size / 16]))
     variable_summaries(full_bias2)
 hidden = tf.nn.relu(tf.add(tf.matmul(hidden, full_weights2), full_bias2))
 # softmax
 with tf.name_scope("weights"):
-    weights = tf.Variable(tf.truncated_normal([hidden_size, class_num], stddev=0.1), dtype=tf.float32)
+    weights = tf.Variable(tf.truncated_normal([hidden_size / 16, class_num], stddev=1e-2), dtype=tf.float32)
     variable_summaries(weights)
 with tf.name_scope("bias"):
-    bias = tf.Variable(tf.constant(0.1, shape=[class_num]), dtype=tf.float32)
+    bias = tf.Variable(tf.constant(1e-2, shape=[class_num]), dtype=tf.float32)
     variable_summaries(bias)
 y = tf.nn.softmax(tf.add(tf.matmul(hidden, weights), bias))
 
