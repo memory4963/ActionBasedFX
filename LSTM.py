@@ -1,5 +1,5 @@
 import os
-from random import random
+import random
 
 os.environ['LD_LIBRARY_PATH'] = ':/usr/local/cuda/lib64'
 
@@ -128,7 +128,7 @@ saver = tf.train.Saver()
 for i in range(1000):
     if (i + 1) % 20 == 0:
         # test accuracy
-        j = int(float(i) / 1000 * skeleton.shape[0] / _batch_size + 0.5)
+        j = int(float(i) / 1000 * skeleton.shape[0] / _batch_size)
         test_batch = skeleton[j * _batch_size:j * _batch_size + _batch_size, :, :]
         test_labels = labels[j * _batch_size:j * _batch_size + _batch_size]
         summary, train_accuracy = sess.run([merged, accuracy], feed_dict={
