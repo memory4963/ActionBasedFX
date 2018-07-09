@@ -13,7 +13,7 @@ import getopt
 
 start_gpu = 0
 gpu_num = 1
-_batch_size = 32
+_batch_size = 16
 dataset_size = 0 # zero means no limitation
 
 if len(sys.argv) > 1:
@@ -59,7 +59,7 @@ input_size = 36
 # 60 frame per batch
 timestep_size = ReadData.batch_size
 
-hidden_size = 256
+hidden_size = 1024
 # LSTM layer num
 layer_num = 2
 # output num
@@ -91,19 +91,33 @@ keep_prob = tf.placeholder(tf.float32, [])
 with tf.name_scope("lstm_cell"):
     mlstm_cell = rnn.MultiRNNCell([make_lstm() for _ in range(layer_num)], state_is_tuple=True)
 init_state = mlstm_cell.zero_state(batch_size, tf.float32)
-
+# lstm_cell * layer_num
 outputs, state = tf.nn.dynamic_rnn(mlstm_cell, inputs=x, initial_state=init_state, time_major=False)
 with tf.name_scope("hidden_state"):
     h_state = outputs[:, -1, :]
-
+# hidden layer * 2
+with tf.name_scope("full_weights1"):
+    full_weights1 = tf.Variable(tf.truncated_normal([hidden_size, hidden_size], stddev=0.1), dtype=tf.float32)
+    variable_summaries(full_weights1)
+with tf.name_scope("full_bias1"):
+    full_bias1 = tf.Variable(tf.constant(0.1, shape=[hidden_size]))
+    variable_summaries(full_bias1)
+hidden = tf.nn.relu(tf.add(tf.matmul(h_state, full_weights1), full_bias1))
+with tf.name_scope("full_weights2"):
+    full_weights2 = tf.Variable(tf.truncated_normal([hidden_size, hidden_size], stddev=0.1), dtype=tf.float32)
+    variable_summaries(full_weights2)
+with tf.name_scope("full_bias2"):
+    full_bias2 = tf.Variable(tf.constant(0.1, shape=[hidden_size]))
+    variable_summaries(full_bias2)
+hidden = tf.nn.relu(tf.add(tf.matmul(hidden, full_weights2), full_bias2))
 # softmax
 with tf.name_scope("weights"):
     weights = tf.Variable(tf.truncated_normal([hidden_size, class_num], stddev=0.1), dtype=tf.float32)
     variable_summaries(weights)
 with tf.name_scope("bias"):
-    bias = tf.Variable(tf.constant(0.1, shape=[_batch_size, class_num]), dtype=tf.float32)
+    bias = tf.Variable(tf.constant(0.1, shape=[class_num]), dtype=tf.float32)
     variable_summaries(bias)
-y = tf.nn.softmax(tf.matmul(h_state, weights) + bias)
+y = tf.nn.softmax(tf.add(tf.matmul(hidden, weights), bias))
 
 with tf.name_scope("total"):
     cross_entropy = -tf.reduce_mean(label * tf.log(y))
@@ -147,7 +161,7 @@ for i in range(1000):
         train_labels = labels[j * _batch_size:j * _batch_size + _batch_size]
         summary, _ = sess.run([merged, optimizer], feed_dict={
             x: train_batch, label: train_labels,
-            keep_prob: 0.5, batch_size: _batch_size
+            keep_prob: 0.8, batch_size: _batch_size
         })
         if j == train_test_int:
             train_writer.add_summary(summary, i * skeleton.shape[0] / _batch_size + j)
