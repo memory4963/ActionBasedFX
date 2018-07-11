@@ -57,7 +57,7 @@ batch_size = tf.placeholder(tf.int32, [])
 # 36 per frame
 input_size = 36
 # 60 frame per batch
-timestep_size = ReadData.batch_size
+timestep_size = ReadData.data_length
 
 hidden_size = 1024
 # LSTM layer num
