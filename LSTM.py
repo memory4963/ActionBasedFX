@@ -52,7 +52,7 @@ sess = tf.Session(config=config)
 skeleton, labels = ReadData.read_data("/home/luoao/openpose/dataset/simpleOutput", dataset_size)
 
 # learning rate
-lr = 1e-2
+lr = 1e-4
 batch_size = tf.placeholder(tf.int32, [])
 # 36 per frame
 input_size = 36
@@ -142,15 +142,15 @@ saver = tf.train.Saver()
 for i in range(1000):
     if (i + 1) % 20 == 0:
         # test accuracy
-        j = int(float(i) / 1000 * skeleton.shape[0] / _batch_size)
+        j = int(float(i) / 1000 * skeleton.shape[0] / _batch_size - 1)
         test_batch = skeleton[j * _batch_size:j * _batch_size + _batch_size, :, :]
         test_labels = labels[j * _batch_size:j * _batch_size + _batch_size]
-        summary, train_accuracy = sess.run([merged, accuracy], feed_dict={
+        summary, train_accuracy, loss = sess.run([merged, accuracy, cross_entropy], feed_dict={
             x: test_batch, label: test_labels,
             keep_prob: 1.0, batch_size: _batch_size
         })
         test_writer.add_summary(summary, i * skeleton.shape[0] / _batch_size)
-        print("train step %d, accuracy: %f" % (i, train_accuracy))
+        print("train step %d, accuracy: %f, loss:%f" % (i, train_accuracy, loss))
     if (i + 1) % 100 == 0:
         # save
         saver.save(sess, "/home/luoao/openpose/models/model_" + str(i) + ".ckpt")
