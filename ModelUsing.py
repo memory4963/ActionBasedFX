@@ -3,19 +3,41 @@ import sys
 import os
 import ReadData
 from tensorflow.contrib import rnn
+import getopt
+import numpy as np
 
-print('loading...')
+start_gpu = 0
+gpu_num = 1
+if len(sys.argv) > 1:
+    # set params
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "", ["start_gpu=", "gpu_num=", "batch_size=", "dataset_size="])
+    except getopt.GetoptError:
+        print("LSTM.py --start_gpu <num> --gpu_num <num>")
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '--start_gpu':
+            start_gpu = int(arg)
+        elif opt == '--gpu_num':
+            gpu_num = int(arg)
+        else:
+            print("LSTM.py --start_gpu <num> --gpu_num <num>")
+            sys.exit(2)
 
-saver = tf.train.Saver()
+visiable_devices = str(start_gpu)
+for i in range(gpu_num - 1):
+    visiable_devices += ", " + str(start_gpu + i + 1)
+
+os.environ["CUDA_VISIBLE_DEVICES"] = visiable_devices
+
+print('loading')
 sess = tf.Session()
-saver.restore(sess, "/home/luoao/openpose/models/model_999.ckpt")
 
 timestep_size = ReadData.data_length
 input_size = 36
 hidden_size = 1024
 class_num = 4
 layer_num = 2
-batch_size = tf.placeholder(tf.int32, [])
 
 
 def variable_summaries(var):
@@ -37,8 +59,8 @@ def make_lstm():
 
 
 x = tf.placeholder(tf.float32, [None, timestep_size, input_size])
-label = tf.placeholder(tf.float32, [None, class_num])
 keep_prob = tf.placeholder(tf.float32, [])
+batch_size = tf.placeholder(tf.int32, [])
 
 with tf.name_scope("lstm_cell"):
     mlstm_cell = rnn.MultiRNNCell([make_lstm() for _ in range(layer_num)], state_is_tuple=True)
@@ -71,26 +93,29 @@ with tf.name_scope("bias"):
     variable_summaries(bias)
 y = tf.nn.softmax(tf.add(tf.matmul(hidden, weights), bias))
 
+saver = tf.train.Saver()
+saver.restore(sess, "/home/luoao/openpose/models/model_999.ckpt")
 
 def process_data(inputs, labels):
-    this_outputs = sess.run(y, feed_dict={x: inputs})
-    this_outputs = tf.argmax(this_outputs, 1)
+    this_outputs = sess.run(y, feed_dict={x: inputs, batch_size: inputs.shape[0], keep_prob: 1.0})
+    this_outputs = np.argmax(this_outputs, axis=1)
     for i in range(this_outputs.shape[0]):
         if this_outputs[i] == 0:
-            this_type = 'marking time and knee lifting.'
+            this_type = 'marking time and knee lifting. a1'
         elif this_outputs[i] == 1:
-            this_type = 'squatting.'
+            this_type = 'squatting. a3'
         elif this_outputs[i] == 2:
-            this_type = 'rotation clapping.'
+            this_type = 'rotation clapping. a9'
         else:
-            this_type = 'punching.'
+            this_type = 'punching. a12'
         print('name: ' + labels[i] + ', type: ' + this_type + '\n')
 
 
 print("please input path of file. input 'exit' to exit\n")
 path = sys.stdin.readline()
 while path != "exit\n":
-    print('path: ', path)
+    print('path: ' + path)
+    path = path[:-1]
     if not os.path.exists(path):
         print('path not exit, please input again.\n')
     else:
