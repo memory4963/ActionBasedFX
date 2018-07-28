@@ -15,13 +15,14 @@ start_gpu = 0
 gpu_num = 1
 _batch_size = 16
 dataset_size = 0 # zero means no limitation
+output_path = '/home/luoao/openpose/models'
 
 if len(sys.argv) > 1:
     # set params
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "", ["start_gpu=", "gpu_num=", "batch_size=", "dataset_size="])
+        opts, args = getopt.getopt(sys.argv[1:], "", ["start_gpu=", "gpu_num=", "batch_size=", "dataset_size=", "output_path="])
     except getopt.GetoptError:
-        print("LSTM.py --start_gpu <num> --gpu_num <num>")
+        print("LSTM.py --start_gpu <num> --gpu_num <num> --batch_size <num> --dataset_size <num> --output_path <path>")
         sys.exit(2)
     for opt, arg in opts:
         if opt == '--start_gpu':
@@ -32,9 +33,14 @@ if len(sys.argv) > 1:
             _batch_size = int(arg)
         elif opt == '--dataset_size':
             dataset_size = int(arg)
+        elif opt == '--output_path':
+            output_path = arg
         else:
-            print("LSTM.py --start_gpu <num> --gpu_num <num> --batch_size <num> --dataset_size <num>")
+            print("LSTM.py --start_gpu <num> --gpu_num <num> --batch_size <num> --dataset_size <num> --output_path <path>")
             sys.exit(2)
+
+if not os.path.exists(output_path):
+    os.makedirs(output_path)
 
 visiable_devices = str(start_gpu)
 for i in range(gpu_num - 1):
@@ -133,8 +139,8 @@ with tf.name_scope('accuracy'):
 tf.summary.scalar('accuracy', accuracy)
 
 merged = tf.summary.merge_all()
-train_writer = tf.summary.FileWriter("/home/luoao/openpose/models/train", sess.graph)
-test_writer = tf.summary.FileWriter("/home/luoao/openpose/models/test")
+train_writer = tf.summary.FileWriter(output_path + "/train", sess.graph)
+test_writer = tf.summary.FileWriter(output_path + "/test")
 
 sess.run(tf.global_variables_initializer())
 saver = tf.train.Saver()
@@ -153,7 +159,7 @@ for i in range(1000):
         print("train step %d, accuracy: %f, loss:%f" % (i, train_accuracy, loss))
     if (i + 1) % 100 == 0:
         # save
-        saver.save(sess, "/home/luoao/openpose/models/model_" + str(i) + ".ckpt")
+        saver.save(sess, output_path + "/model_" + str(i) + ".ckpt")
 
     train_test_int = random.randint(0, skeleton.shape[0] / _batch_size)
     for j in range(skeleton.shape[0] / _batch_size):

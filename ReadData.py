@@ -3,8 +3,8 @@ import random
 import numpy as np
 import os
 
-data_length = 60
-data_interval = 30
+data_length = 24
+data_interval = 24
 
 
 def get_type(name):
@@ -58,7 +58,7 @@ def read_data(path, size=0):
             skeleton_temp = np.concatenate((skeleton_temp, file_data[data - data_length:data, :]), axis=0)
     labels = label_temp[1:]
     skeleton = skeleton_temp[1:, :]
-    skeleton = skeleton.reshape([-1, 60, 36])
+    skeleton = skeleton.reshape([-1, data_length, 36])
     np.save(path + "/skeleton.npy", skeleton)
     np.save(path + "/labels.npy", labels)
     labels = np.eye(np.max(labels) + 1)[labels]
@@ -95,7 +95,7 @@ def read_data_test(path, size=0):
             skeleton_temp = np.concatenate((skeleton_temp, file_data[data - data_length:data, :]), axis=0)
     names = label_temp[1:]
     skeleton = skeleton_temp[1:, :]
-    skeleton = skeleton.reshape([-1, 60, 36])
-    np.save(path + "/skeleton.npy", skeleton)
-    np.save(path + "/labels.npy", names)
+    skeleton = skeleton.reshape([-1, data_length, 36])
+    # np.save(path + "/skeleton.npy", skeleton)
+    # np.save(path + "/labels.npy", names)
     return skeleton, names
