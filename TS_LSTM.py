@@ -68,9 +68,9 @@ if __name__ == '__main__':
 
     # load data set
     skeleton, labels = ReadData.read_data("/home/luoao/openpose/dataset/simpleOutput", args.dataset_size)
-    skeleton1 = skeleton[:, 1:] - skeleton[:, :-1]
-    skeleton5 = skeleton[:, 5:] - skeleton[:, :-5]
-    skeleton10 = skeleton[:, 10:] - skeleton[:, :-10]
+    skeleton1 = skeleton[:, 1:, :] - skeleton[:, :-1, :]
+    skeleton5 = skeleton[:, 5:, :] - skeleton[:, :-5, :]
+    skeleton10 = skeleton[:, 10:, :] - skeleton[:, :-10, :]
     class_num = labels.shape[1]
 
     # declare placeholders
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     for i, tslstm in enumerate(ts_lstms):
         ts_lstm_output = []
         for j, lstm in enumerate(tslstm):
-            lstm_output, _ = tf.nn.dynamic_rnn(lstm, x[i][None, j::windows[i]], initial_state=initial_states[i, j])
+            lstm_output, _ = tf.nn.dynamic_rnn(lstm, x[i][None, j::windows[i]], initial_state=initial_states[i][j])
             ts_lstm_output += lstm_output
         ts_lstms_outputs += ts_lstm_output
 
@@ -183,12 +183,15 @@ if __name__ == '__main__':
 
         for j in range(skeleton.shape[0] / args.batch_size):
             train_batch = skeleton[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]
+            train_batch1 = skeleton1[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]
+            train_batch5 = skeleton5[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]
+            train_batch10 = skeleton10[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]
             train_label = labels[j * args.batch_size:j * args.batch_size + args.batch_size]
             sess.run(optimizer, feed_dict={
                 x0: train_batch,
-                x1: train_batch[:, 1:] - train_batch[:, :-1],
-                x5: train_batch[:, 5:] - train_batch[:, :-5],
-                x10: train_batch[:, 10:] - train_batch[:, :-10],
+                x1: train_batch1,
+                x5: train_batch5,
+                x10: train_batch10,
                 label: train_label,
                 keep_prob: 0.8,
                 batch_size: args.batch_size
