@@ -1,59 +1,21 @@
-import os
 import random
-
-os.environ['LD_LIBRARY_PATH'] = ':/usr/local/cuda/lib64'
-
-
 import tensorflow as tf
 from tensorflow.contrib import rnn
 import ReadData
-import sys
-import getopt
+import Utils
 
 
-start_gpu = 0
-gpu_num = 1
-_batch_size = 16
-dataset_size = 0 # zero means no limitation
-output_path = '/home/luoao/openpose/models'
+temp = Utils.arg_proc()
 
-if len(sys.argv) > 1:
-    # set params
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "", ["start_gpu=", "gpu_num=", "batch_size=", "dataset_size=", "output_path="])
-    except getopt.GetoptError:
-        print("LSTM.py --start_gpu <num> --gpu_num <num> --batch_size <num> --dataset_size <num> --output_path <path>")
-        sys.exit(2)
-    for opt, arg in opts:
-        if opt == '--start_gpu':
-            start_gpu = int(arg)
-        elif opt == '--gpu_num':
-            gpu_num = int(arg)
-        elif opt == '--batch_size':
-            _batch_size = int(arg)
-        elif opt == '--dataset_size':
-            dataset_size = int(arg)
-        elif opt == '--output_path':
-            output_path = arg
-        else:
-            print("LSTM.py --start_gpu <num> --gpu_num <num> --batch_size <num> --dataset_size <num> --output_path <path>")
-            sys.exit(2)
-
-if not os.path.exists(output_path):
-    os.makedirs(output_path)
-
-visiable_devices = str(start_gpu)
-for i in range(gpu_num - 1):
-    visiable_devices += ", " + str(start_gpu + i + 1)
-
-os.environ["CUDA_VISIBLE_DEVICES"] = visiable_devices
+start_gpu = temp.start_gpu
+gpu_num = temp.gpu_num
+_batch_size = temp.batch_size
+dataset_size = temp.dataset_size  # zero means no limitation
+output_path = temp.output_path
 
 config = tf.ConfigProto(allow_soft_placement=True)
 config.gpu_options.allow_growth = True
 sess = tf.Session(config=config)
-
-# mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
-# print(type(mnist.train.images))
 
 skeleton, labels = ReadData.read_data("/home/luoao/openpose/dataset/simpleOutput", dataset_size)
 
@@ -72,19 +34,6 @@ layer_num = 2
 class_num = labels.shape[1]
 
 
-def variable_summaries(var):
-    """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
-    with tf.name_scope('summaries'):
-        mean = tf.reduce_mean(var)
-        tf.summary.scalar('mean', mean)
-        with tf.name_scope('stddev'):
-            stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
-        tf.summary.scalar('stddev', stddev)
-        tf.summary.scalar('max', tf.reduce_max(var))
-        tf.summary.scalar('min', tf.reduce_min(var))
-        tf.summary.histogram('histogram', var)
-
-
 def make_lstm():
     lstm_cell = rnn.BasicLSTMCell(num_units=hidden_size, forget_bias=1.0, state_is_tuple=True)
     return rnn.DropoutWrapper(cell=lstm_cell, input_keep_prob=1.0, output_keep_prob=keep_prob)
@@ -98,31 +47,31 @@ with tf.name_scope("lstm_cell"):
     mlstm_cell = rnn.MultiRNNCell([make_lstm() for _ in range(layer_num)], state_is_tuple=True)
 init_state = mlstm_cell.zero_state(batch_size, tf.float32)
 # lstm_cell * layer_num
-outputs, state = tf.nn.dynamic_rnn(mlstm_cell, inputs=x, initial_state=init_state, time_major=False)
+outputs, _ = tf.nn.dynamic_rnn(mlstm_cell, inputs=x, initial_state=init_state, time_major=False)
 with tf.name_scope("hidden_state"):
     h_state = outputs[:, -1, :]
 # hidden layer * 2
 with tf.name_scope("full_weights1"):
     full_weights1 = tf.Variable(tf.truncated_normal([hidden_size, hidden_size / 4], stddev=1e-2), dtype=tf.float32)
-    variable_summaries(full_weights1)
+    Utils.variable_summaries(full_weights1)
 with tf.name_scope("full_bias1"):
     full_bias1 = tf.Variable(tf.constant(1e-2, shape=[hidden_size / 4]))
-    variable_summaries(full_bias1)
+    Utils.variable_summaries(full_bias1)
 hidden = tf.nn.relu(tf.add(tf.matmul(h_state, full_weights1), full_bias1))
 with tf.name_scope("full_weights2"):
     full_weights2 = tf.Variable(tf.truncated_normal([hidden_size / 4, hidden_size / 16], stddev=1e-2), dtype=tf.float32)
-    variable_summaries(full_weights2)
+    Utils.variable_summaries(full_weights2)
 with tf.name_scope("full_bias2"):
     full_bias2 = tf.Variable(tf.constant(1e-2, shape=[hidden_size / 16]))
-    variable_summaries(full_bias2)
+    Utils.variable_summaries(full_bias2)
 hidden = tf.nn.relu(tf.add(tf.matmul(hidden, full_weights2), full_bias2))
 # softmax
 with tf.name_scope("weights"):
     weights = tf.Variable(tf.truncated_normal([hidden_size / 16, class_num], stddev=1e-2), dtype=tf.float32)
-    variable_summaries(weights)
+    Utils.variable_summaries(weights)
 with tf.name_scope("bias"):
     bias = tf.Variable(tf.constant(1e-2, shape=[class_num]), dtype=tf.float32)
-    variable_summaries(bias)
+    Utils.variable_summaries(bias)
 y = tf.nn.softmax(tf.add(tf.matmul(hidden, weights), bias))
 
 with tf.name_scope("total"):
