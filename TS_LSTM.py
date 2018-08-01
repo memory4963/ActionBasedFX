@@ -48,14 +48,19 @@ windows = [timestep_size / 4 - 1,
 ts = [timestep_size / 4 - 1,
       timestep_size / 2 - 3,
       timestep_size / 2 - 3,
-      -1, -1, -1,
+      1, 1, 1,
       timestep_size / 4 - 1]
 
 linear_size = [128, 64, 32, 64]
 
 
+# lstm_cnt = 0
+
+
 def lstm_cell(shape):
-    return rnn.BasicLSTMCell(shape, state_is_tuple=True, forget_bias=1.0)
+    # global lstm_cnt
+    # with tf.variable_scope('lstm' + str(lstm_cnt)):
+    return rnn.BasicLSTMCell(shape, state_is_tuple=True, forget_bias=1.0, reuse=tf.AUTO_REUSE)
 
 
 def ts_lstm(window):
@@ -65,6 +70,8 @@ def ts_lstm(window):
 if __name__ == '__main__':
     # process args
     args = Utils.arg_proc()
+
+    # tf.reset_default_graph()
 
     # load data set
     skeleton, labels = ReadData.read_data("/home/luoao/openpose/dataset/simpleOutput", args.dataset_size)
@@ -97,32 +104,34 @@ if __name__ == '__main__':
     for i, tslstm in enumerate(ts_lstms):
         ts_lstm_output = []
         for j, lstm in enumerate(tslstm):
-            lstm_output, _ = tf.nn.dynamic_rnn(lstm, x[i][None, j::windows[i]], initial_state=initial_states[i][j])
-            ts_lstm_output += lstm_output
-        ts_lstms_outputs += ts_lstm_output
+            lstm_output, _ = tf.nn.dynamic_rnn(lstm,
+                                               x[i][None, j:-windows[i]:ts[i], :][0],
+                                               initial_state=initial_states[i][j])
+            ts_lstm_output.append(lstm_output)
+        ts_lstms_outputs.append(ts_lstm_output)
 
     # SumPool and MeanPool [7, batch_size, data_length]
     pools = []
     for outputs in ts_lstms_outputs[:-1]:
-        sumpool = outputs[0]
+        sumpool = outputs[0][:, -1]
         for output in outputs[1:]:
-            sumpool += output
-        pools += sumpool
-    meanpool = ts_lstms_outputs[-1][0]
+            sumpool += output[:, -1]
+        pools.append(sumpool)
+    meanpool = ts_lstms_outputs[-1][0][:, -1]
     for output in ts_lstms_outputs[-1][1:]:
-        meanpool += output
+        meanpool += output[:, -1]
     meanpool /= windows[6]
-    pools += meanpool
+    pools.append(meanpool)
 
     # Concat [4, batch_size, *]
     # * = [data_length, 2*data_length, 3*data_length, data_length]
     concats = [pools[0]]
-    concats += tf.concat([pools[1], pools[2]], 1)
-    concats += tf.concat([pools[3], pools[4], pools[5]], 1)
-    concats += pools[6]
+    concats.append(tf.concat([pools[1], pools[2]], 1))
+    concats.append(tf.concat([pools[3], pools[4], pools[5]], 1))
+    concats.append(pools[6])
 
     # Linear [4, batch_size, linear_size]
-    weights = [Utils.weight_variable([concats[i].shape, linear_size[i]] for i in range(4))]
+    weights = [Utils.weight_variable([concats[i].shape[1].value, linear_size[i]]) for i in range(4)]
     bias = [Utils.bias_variable([linear_size[i]]) for i in range(4)]
     linears = [tf.nn.relu(tf.add(tf.matmul(concats[i], weights[i]), bias[i])) for i in range(4)]
 
@@ -152,7 +161,7 @@ if __name__ == '__main__':
 
     # loss
     cross_entropy = -tf.reduce_mean(label * tf.log(y))
-    optimizer = tf.train.AdamOptimizer.minimize(cross_entropy)
+    optimizer = tf.train.AdamOptimizer(lr).minimize(cross_entropy)
     correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(label, 1))
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 
