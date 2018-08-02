@@ -37,19 +37,15 @@ keep_prob = tf.placeholder(tf.float32, [])
 #           --->(Concat)->output/class
 # Softmax2-/ /
 # Softmax3--/
-windows = [timestep_size / 4 - 1,
-           timestep_size / 2 + 2,
-           timestep_size / 2 - 2,
+windows = [(timestep_size - 1) / 4,
+           (timestep_size - 1) / 2,
+           (timestep_size - 5) / 2,
            timestep_size - 1,
            timestep_size - 5,
-           timestep_size - 8,
-           timestep_size / 2 - 2]
+           timestep_size - 10,
+           timestep_size / 2]
 
-ts = [timestep_size / 4 - 1,
-      timestep_size / 2 - 3,
-      timestep_size / 2 - 3,
-      1, 1, 1,
-      timestep_size / 4 - 1]
+ts = windows
 
 linear_size = [128, 64, 32, 64]
 
@@ -105,16 +101,18 @@ if __name__ == '__main__':
         ts_lstm_output = []
         for j, lstm in enumerate(tslstm):
             lstm_output, _ = tf.nn.dynamic_rnn(lstm,
-                                               x[i][None, j:-windows[i]:ts[i], :][0],
+                                               x[i][:, j::ts[i], :],
                                                initial_state=initial_states[i][j])
             ts_lstm_output.append(lstm_output)
         ts_lstms_outputs.append(ts_lstm_output)
 
     # SumPool and MeanPool [7, batch_size, data_length]
     pools = []
-    for outputs in ts_lstms_outputs[:-1]:
+    for i, outputs in enumerate(ts_lstms_outputs[:-1]):
+        print(i, outputs[0].shape)
         sumpool = outputs[0][:, -1]
-        for output in outputs[1:]:
+        for j, output in enumerate(outputs[1:]):
+            print(i, j, output.shape)
             sumpool += output[:, -1]
         pools.append(sumpool)
     meanpool = ts_lstms_outputs[-1][0][:, -1]
