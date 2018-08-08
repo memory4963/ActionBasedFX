@@ -169,11 +169,11 @@ if __name__ == '__main__':
 
     # train
     for i in range(1000):
-        if (i + 1) % 20 == 0:
+        if (i + 1) % 50 == 0:
             # test accuracy
-            j = int(float(i) / 1000 * skeleton.shape[0] / args.batch_size - 1)
-            test_batch = skeleton[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]
-            test_label = labels[j * args.batch_size:j * args.batch_size + args.batch_size]
+            test_size = int(skeleton.shape[0] * 0.2)
+            test_batch = skeleton[-test_size:, :, :]
+            test_label = labels[-test_size:]
             train_accuracy, loss = sess.run([accuracy, cross_entropy], feed_dict={
                 x0: test_batch,
                 x1: test_batch[:, 1:] - test_batch[:, :-1],
@@ -181,14 +181,14 @@ if __name__ == '__main__':
                 x10: test_batch[:, 10:] - test_batch[:, :-10],
                 label: test_label,
                 keep_prob: 1.0,
-                batch_size: args.batch_size
+                batch_size: test_size
             })
             print('train step %d, acc = %f, loss = %f' % (i, train_accuracy, loss))
         if (i + i) % 100 == 0:
             # save
             saver.save(sess, args.output_path + 'model_' + str(i) + '.ckpt')
 
-        for j in range(skeleton.shape[0] / args.batch_size):
+        for j in range(int(skeleton.shape[0] / args.batch_size * 0.8)):
             train_batch = skeleton[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]
             train_batch1 = skeleton1[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]
             train_batch5 = skeleton5[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]
