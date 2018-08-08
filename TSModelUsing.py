@@ -4,6 +4,7 @@ import ReadData
 import Utils
 import sys
 import os
+import numpy as np
 
 lr = 1e-4
 input_size = 36
@@ -169,8 +170,17 @@ if __name__ == '__main__':
     saver = tf.train.Saver()
     saver.restore(sess, "/home/luoao/openpose/models/ts_output/model_950ckpt")
 
+
 def process_data(inputs, labels):
-    this_outputs = sess.run(y, feed_dict={x: inputs, batch_size: inputs.shape[0], keep_prob: 1.0})
+    this_outputs, loss = sess.run([y, cross_entropy], feed_dict={
+        x0: inputs,
+        x1: inputs[:, 1:] - inputs[:, :-1],
+        x5: inputs[:, 5:] - inputs[:, :-5],
+        x10: inputs[:, 10:] - inputs[:, :-10],
+        label: labels,
+        keep_prob: 1.0,
+        batch_size: args.batch_size
+    })
     this_outputs = np.argmax(this_outputs, axis=1)
     for i in range(this_outputs.shape[0]):
         if this_outputs[i] == 0:
@@ -181,7 +191,7 @@ def process_data(inputs, labels):
             this_type = 'rotation clapping. a9'
         else:
             this_type = 'punching. a12'
-        print('name: ' + labels[i] + ', type: ' + this_type + '\n')
+        print('name: ' + labels[i] + ', type: ' + this_type + 'loss: ' + str(loss) + '\n')
 
 
 print("please input path of file. input 'exit' to exit\n")

@@ -186,7 +186,7 @@ if __name__ == '__main__':
             print('train step %d, acc = %f, loss = %f' % (i, train_accuracy, loss))
         if (i + i) % 100 == 0:
             # save
-            saver.save(sess, args.output_path + 'model_' + str(i) + 'ckpt')
+            saver.save(sess, args.output_path + 'model_' + str(i) + '.ckpt')
 
         for j in range(skeleton.shape[0] / args.batch_size):
             train_batch = skeleton[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]
