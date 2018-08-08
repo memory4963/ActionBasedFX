@@ -14,6 +14,7 @@ batch_size = tf.placeholder(tf.int32, [])
 hidden_size = 256
 layer_num = 2
 keep_prob = tf.placeholder(tf.float32, [])
+class_num = 4
 
 # TS-LSTM networks. set time step to 36
 # 0: hidden 128 D 1  W 8  TS 8
@@ -72,19 +73,12 @@ if __name__ == '__main__':
 
     # tf.reset_default_graph()
 
-    # load data set
-    skeleton, labels = ReadData.read_data("/home/luoao/openpose/dataset/simpleOutput", args.dataset_size)
-    skeleton1 = skeleton[:, 1:, :] - skeleton[:, :-1, :]
-    skeleton5 = skeleton[:, 5:, :] - skeleton[:, :-5, :]
-    skeleton10 = skeleton[:, 10:, :] - skeleton[:, :-10, :]
-    class_num = labels.shape[1]
 
     # declare placeholders
     x0 = tf.placeholder(tf.float32, [None, timestep_size, input_size], name="x0")
     x1 = tf.placeholder(tf.float32, [None, timestep_size - 1, input_size], name="x1")
     x5 = tf.placeholder(tf.float32, [None, timestep_size - 5, input_size], name="x5")
     x10 = tf.placeholder(tf.float32, [None, timestep_size - 10, input_size], name="x10")
-    label = tf.placeholder(tf.float32, [None, class_num])
 
     x = [x1, x1, x5, x1, x5, x10, x0]
 
@@ -159,12 +153,7 @@ if __name__ == '__main__':
     y = tf.nn.softmax(tf.add(tf.matmul(fc, sm_weights), sm_bias))
 
     # loss
-    cross_entropy = -tf.reduce_mean(label * tf.log(y))
-    optimizer = tf.train.AdamOptimizer(lr).minimize(cross_entropy)
-    correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(label, 1))
-    accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
-
-    config = tf.ConfigProto(log_device_placement=True)
+    config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
     saver = tf.train.Saver()
@@ -172,14 +161,13 @@ if __name__ == '__main__':
 
 
 def process_data(inputs, labels):
-    this_outputs, loss = sess.run([y, cross_entropy], feed_dict={
+    this_outputs = sess.run(y, feed_dict={
         x0: inputs,
         x1: inputs[:, 1:] - inputs[:, :-1],
         x5: inputs[:, 5:] - inputs[:, :-5],
         x10: inputs[:, 10:] - inputs[:, :-10],
-        label: labels,
         keep_prob: 1.0,
-        batch_size: args.batch_size
+        batch_size: inputs.shape[0]
     })
     this_outputs = np.argmax(this_outputs, axis=1)
     for i in range(this_outputs.shape[0]):
@@ -191,7 +179,7 @@ def process_data(inputs, labels):
             this_type = 'rotation clapping. a9'
         else:
             this_type = 'punching. a12'
-        print('name: ' + labels[i] + ', type: ' + this_type + 'loss: ' + str(loss) + '\n')
+        print('name: ' + labels[i] + ', type: ' + this_type + '\n')
 
 
 print("please input path of file. input 'exit' to exit\n")
