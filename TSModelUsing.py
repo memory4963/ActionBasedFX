@@ -2,6 +2,9 @@ import tensorflow as tf
 from tensorflow.contrib import rnn
 import ReadData
 import Utils
+import sys
+import os
+import numpy as np
 
 lr = 1e-4
 input_size = 36
@@ -11,6 +14,7 @@ batch_size = tf.placeholder(tf.int32, [])
 hidden_size = 256
 layer_num = 2
 keep_prob = tf.placeholder(tf.float32, [])
+class_num = 4
 
 # TS-LSTM networks. set time step to 36
 # 0: hidden 128 D 1  W 8  TS 8
@@ -69,19 +73,12 @@ if __name__ == '__main__':
 
     # tf.reset_default_graph()
 
-    # load data set
-    skeleton, labels = ReadData.read_data("/home/luoao/openpose/dataset/simpleOutput", args.dataset_size)
-    skeleton1 = skeleton[:, 1:, :] - skeleton[:, :-1, :]
-    skeleton5 = skeleton[:, 5:, :] - skeleton[:, :-5, :]
-    skeleton10 = skeleton[:, 10:, :] - skeleton[:, :-10, :]
-    class_num = labels.shape[1]
 
     # declare placeholders
     x0 = tf.placeholder(tf.float32, [None, timestep_size, input_size], name="x0")
     x1 = tf.placeholder(tf.float32, [None, timestep_size - 1, input_size], name="x1")
     x5 = tf.placeholder(tf.float32, [None, timestep_size - 5, input_size], name="x5")
     x10 = tf.placeholder(tf.float32, [None, timestep_size - 10, input_size], name="x10")
-    label = tf.placeholder(tf.float32, [None, class_num])
 
     x = [x1, x1, x5, x1, x5, x10, x0]
 
@@ -156,50 +153,44 @@ if __name__ == '__main__':
     y = tf.nn.softmax(tf.add(tf.matmul(fc, sm_weights), sm_bias))
 
     # loss
-    cross_entropy = -tf.reduce_mean(label * tf.log(y))
-    optimizer = tf.train.AdamOptimizer(lr).minimize(cross_entropy)
-    correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(label, 1))
-    accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
-
-    config = tf.ConfigProto(log_device_placement=True)
+    config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
-    sess.run(tf.global_variables_initializer())
     saver = tf.train.Saver()
+    saver.restore(sess, "/home/luoao/openpose/models/ts_output/model_950ckpt")
 
-    # train
-    for i in range(1000):
-        if (i + 1) % 50 == 0:
-            # test accuracy
-            test_size = int(skeleton.shape[0] * 0.2)
-            test_batch = skeleton[-test_size:, :, :]
-            test_label = labels[-test_size:]
-            train_accuracy, loss = sess.run([accuracy, cross_entropy], feed_dict={
-                x0: test_batch,
-                x1: test_batch[:, 1:] - test_batch[:, :-1],
-                x5: test_batch[:, 5:] - test_batch[:, :-5],
-                x10: test_batch[:, 10:] - test_batch[:, :-10],
-                label: test_label,
-                keep_prob: 1.0,
-                batch_size: test_size
-            })
-            print('train step %d, acc = %f, loss = %f' % (i, train_accuracy, loss))
-        if (i + i) % 100 == 0:
-            # save
-            saver.save(sess, args.output_path + 'model_' + str(i) + '.ckpt')
 
-        for j in range(int(skeleton.shape[0] / args.batch_size * 0.8)):
-            train_batch = skeleton[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]
-            train_batch1 = skeleton1[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]
-            train_batch5 = skeleton5[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]
-            train_batch10 = skeleton10[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]
-            train_label = labels[j * args.batch_size:j * args.batch_size + args.batch_size]
-            sess.run(optimizer, feed_dict={
-                x0: train_batch,
-                x1: train_batch1,
-                x5: train_batch5,
-                x10: train_batch10,
-                label: train_label,
-                keep_prob: 0.8,
-                batch_size: args.batch_size
-            })
+def process_data(inputs, labels):
+    this_outputs = sess.run(y, feed_dict={
+        x0: inputs,
+        x1: inputs[:, 1:] - inputs[:, :-1],
+        x5: inputs[:, 5:] - inputs[:, :-5],
+        x10: inputs[:, 10:] - inputs[:, :-10],
+        keep_prob: 1.0,
+        batch_size: inputs.shape[0]
+    })
+    this_outputs = np.argmax(this_outputs, axis=1)
+    for i in range(this_outputs.shape[0]):
+        if this_outputs[i] == 0:
+            this_type = 'marking time and knee lifting. a1'
+        elif this_outputs[i] == 1:
+            this_type = 'squatting. a3'
+        elif this_outputs[i] == 2:
+            this_type = 'rotation clapping. a9'
+        else:
+            this_type = 'punching. a12'
+        print('name: ' + labels[i] + ', type: ' + this_type + '\n')
+
+
+print("please input path of file. input 'exit' to exit\n")
+path = sys.stdin.readline()
+while path != "exit\n":
+    print('path: ' + path)
+    path = path[:-1]
+    if not os.path.exists(path):
+        print('path not exit, please input again.\n')
+    else:
+        skeleton, names = ReadData.read_data_test(path)
+        process_data(skeleton, names)
+    path = sys.stdin.readline()
+print("exit.")

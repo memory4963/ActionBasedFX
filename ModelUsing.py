@@ -96,6 +96,7 @@ y = tf.nn.softmax(tf.add(tf.matmul(hidden, weights), bias))
 saver = tf.train.Saver()
 saver.restore(sess, "/home/luoao/openpose/models/model_999.ckpt")
 
+
 def process_data(inputs, labels):
     this_outputs = sess.run(y, feed_dict={x: inputs, batch_size: inputs.shape[0], keep_prob: 1.0})
     this_outputs = np.argmax(this_outputs, axis=1)
