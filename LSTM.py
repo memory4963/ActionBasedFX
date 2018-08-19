@@ -21,7 +21,7 @@ skeleton, labels = ReadData.read_data("/home/luoao/openpose/dataset/simpleOutput
 
 # learning rate
 lr = 1e-4
-batch_size = tf.placeholder(tf.int32, [])
+batch_size = tf.placeholder(tf.int32, [], name='batch_size')
 # 36 per frame
 input_size = 36
 # 60 frame per batch
@@ -39,9 +39,9 @@ def make_lstm():
     return rnn.DropoutWrapper(cell=lstm_cell, input_keep_prob=1.0, output_keep_prob=keep_prob)
 
 
-x = tf.placeholder(tf.float32, [None, timestep_size, input_size])
-label = tf.placeholder(tf.float32, [None, class_num])
-keep_prob = tf.placeholder(tf.float32, [])
+x = tf.placeholder(tf.float32, [None, timestep_size, input_size], name='x')
+label = tf.placeholder(tf.float32, [None, class_num], name='label')
+keep_prob = tf.placeholder(tf.float32, [], name='keep_prob')
 
 with tf.name_scope("lstm_cell"):
     mlstm_cell = rnn.MultiRNNCell([make_lstm() for _ in range(layer_num)], state_is_tuple=True)
@@ -72,10 +72,10 @@ with tf.name_scope("weights"):
 with tf.name_scope("bias"):
     bias = tf.Variable(tf.constant(1e-2, shape=[class_num]), dtype=tf.float32)
     Utils.variable_summaries(bias)
-y = tf.nn.softmax(tf.add(tf.matmul(hidden, weights), bias))
+y = tf.nn.softmax(tf.add(tf.matmul(hidden, weights), bias), name='y')
 
 with tf.name_scope("total"):
-    cross_entropy = -tf.reduce_mean(label * tf.log(y))
+    cross_entropy = -tf.reduce_mean(label * tf.log(y), name='cross_entropy')
 tf.summary.scalar('cross_entropy', cross_entropy)
 
 with tf.name_scope('train'):
@@ -84,7 +84,7 @@ with tf.name_scope('accuracy'):
     with tf.name_scope('correct_prediction'):
         correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(label, 1))
     with tf.name_scope('accuracy'):
-        accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+        accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"), name='accuracy')
 tf.summary.scalar('accuracy', accuracy)
 
 merged = tf.summary.merge_all()

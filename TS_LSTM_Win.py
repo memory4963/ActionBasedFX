@@ -6,11 +6,11 @@ import Utils
 lr = 1e-4
 input_size = 36
 timestep_size = ReadData.data_length
-batch_size = tf.placeholder(tf.int32, [])
+batch_size = tf.placeholder(tf.int32, [], name='batch_size')
 
 hidden_size = 256
 layer_num = 2
-keep_prob = tf.placeholder(tf.float32, [])
+keep_prob = tf.placeholder(tf.float32, [], name='keep_prob')
 
 # TS-LSTM networks. set time step to 36
 # 0: hidden 128 D 1  W 8  TS 8
@@ -77,11 +77,11 @@ if __name__ == '__main__':
     class_num = labels.shape[1]
 
     # declare placeholders
-    x0 = tf.placeholder(tf.float32, [None, timestep_size, input_size], name="x0")
-    x1 = tf.placeholder(tf.float32, [None, timestep_size - 1, input_size], name="x1")
-    x5 = tf.placeholder(tf.float32, [None, timestep_size - 5, input_size], name="x5")
-    x10 = tf.placeholder(tf.float32, [None, timestep_size - 10, input_size], name="x10")
-    label = tf.placeholder(tf.float32, [None, class_num])
+    x0 = tf.placeholder(tf.float32, [None, timestep_size, input_size], name='x0')
+    x1 = tf.placeholder(tf.float32, [None, timestep_size - 1, input_size], name='x1')
+    x5 = tf.placeholder(tf.float32, [None, timestep_size - 5, input_size], name='x5')
+    x10 = tf.placeholder(tf.float32, [None, timestep_size - 10, input_size], name='x10')
+    label = tf.placeholder(tf.float32, [None, class_num], name='label')
 
     x = [x1, x1, x5, x1, x5, x10, x0]
 
@@ -153,13 +153,13 @@ if __name__ == '__main__':
     # Softmax
     sm_weights = Utils.weight_variable([concat_size / 16, class_num])
     sm_bias = Utils.bias_variable([class_num])
-    y = tf.nn.softmax(tf.add(tf.matmul(fc, sm_weights), sm_bias))
+    y = tf.nn.softmax(tf.add(tf.matmul(fc, sm_weights), sm_bias), name='y')
 
     # loss
-    cross_entropy = -tf.reduce_mean(label * tf.log(y))
+    cross_entropy = -tf.reduce_mean(label * tf.log(y), name='cross_entropy')
     optimizer = tf.train.AdamOptimizer(lr).minimize(cross_entropy)
     correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(label, 1))
-    accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"), name='accuracy')
 
     config = tf.ConfigProto(log_device_placement=True)
     config.gpu_options.allow_growth = True
