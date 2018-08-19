@@ -37,13 +37,13 @@ keep_prob = tf.placeholder(tf.float32, [], name='keep_prob')
 #           --->(Concat)->output/class
 # Softmax2-/ /
 # Softmax3--/
-windows = [(timestep_size - 1) / 4,
-           (timestep_size - 1) / 2,
-           (timestep_size - 5) / 2,
-           timestep_size - 1,
-           timestep_size - 5,
-           timestep_size - 10,
-           timestep_size / 2]
+windows = [int((timestep_size - 1) / 4),
+           int((timestep_size - 1) / 2),
+           int((timestep_size - 5) / 2),
+           int(timestep_size - 1),
+           int(timestep_size - 5),
+           int(timestep_size - 10),
+           int(timestep_size / 2)]
 
 ts = windows
 
@@ -142,16 +142,16 @@ if __name__ == '__main__':
 
     # Full Connection
     concat_size = sum(linear_size)
-    fc_weights = Utils.weight_variable([concat_size, concat_size / 4])
-    fc_bias = Utils.bias_variable([concat_size / 4])
+    fc_weights = Utils.weight_variable([int(concat_size), int(concat_size/ 4)])
+    fc_bias = Utils.bias_variable([int(concat_size/ 4)])
     fc = tf.nn.relu(tf.add(tf.matmul(concat, fc_weights), fc_bias))
 
-    fc_weights = Utils.weight_variable([concat_size / 4, concat_size / 16])
-    fc_bias = Utils.bias_variable([concat_size / 16])
+    fc_weights = Utils.weight_variable([int(concat_size/ 4), int(concat_size/ 16)])
+    fc_bias = Utils.bias_variable([int(concat_size/ 16)])
     fc = tf.nn.relu(tf.add(tf.matmul(fc, fc_weights), fc_bias))
 
     # Softmax
-    sm_weights = Utils.weight_variable([concat_size / 16, class_num])
+    sm_weights = Utils.weight_variable([int(concat_size/ 16), class_num])
     sm_bias = Utils.bias_variable([class_num])
     y = tf.nn.softmax(tf.add(tf.matmul(fc, sm_weights), sm_bias), name='y')
 
