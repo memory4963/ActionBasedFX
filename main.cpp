@@ -1,3 +1,4 @@
+
 #include <string>
 #include <iostream>
 
@@ -22,14 +23,14 @@
 #include "tensorflow/core/protobuf/meta_graph.pb.h"
 //#include "tensorflow/cc/client/client_session.h"
 //#include "tensorflow/cc/ops/standard_ops.h"
-#include "tensorflow/core/framework/tensor.h"
+//#include "tensorflow/core/framework/tensor.h"
 
 using namespace tensorflow;
 using namespace std;
 
 int main(int argc, char* argv[])
 {
-	string input_path = "D:\\";
+	string input_path = "D:\\ActionBasedFX\\origin_output\\";
 	for (size_t i = 0; i < argc; i++)
 	{
 		if (strcmp(argv[i], "--output_path") == 0)
@@ -39,8 +40,8 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	const string pathToGraph = input_path + "model_999.ckpt.meta";
-	const string checkpointPath = input_path + "model_999.ckpt";
+	const string pathToGraph = input_path + "model_950.ckpt.meta";
+	const string checkpointPath = input_path + "model_950.ckpt";
 	auto session = NewSession(SessionOptions());
 	if (session == nullptr)
 	{
@@ -68,9 +69,9 @@ int main(int argc, char* argv[])
 	Tensor checkpointPathTensor(DT_STRING, TensorShape());
 	checkpointPathTensor.scalar<std::string>()() = checkpointPath;
 	status = session->Run(
-	{ { graph_def.saver_def().filename_tensor_name(), checkpointPathTensor }, },
-	{},
-	{ graph_def.saver_def().restore_op_name() },
+		{ { graph_def.saver_def().filename_tensor_name(), checkpointPathTensor }, },
+		{},
+		{ graph_def.saver_def().restore_op_name() },
 		nullptr);
 	if (!status.ok())
 	{
@@ -78,10 +79,10 @@ int main(int argc, char* argv[])
 	}
 
 	vector<pair<string, Tensor>> inputs;
-
+	// todo: TensorShape x0.tensor<float, 3>() output/y
 	Tensor batch_size(tensorflow::DT_INT32, TensorShape());
 	batch_size.scalar<int>()() = 1;
-
+	
 	Tensor keep_prob(tensorflow::DT_FLOAT, TensorShape());
 	keep_prob.scalar<float>()() = 1.0;
 
@@ -95,8 +96,46 @@ int main(int argc, char* argv[])
 
 	//input data
 	auto x0_map = x0.tensor<float, 3>();
-	x0_map(0, 0, 0) = 1.1;
+	auto x1_map = x0.tensor<float, 3>();
+	auto x5_map = x0.tensor<float, 3>();
+	auto x10_map = x0.tensor<float, 3>();
+	auto label_map = label.tensor<float, 2>();
 
+	for (size_t i = 0; i < 14; i++)
+	{
+		for (size_t j = 0; j < 36; j++)
+		{
+			x0_map(0, i, j) = 1.0;
+			x1_map(0, i, j) = 1.0;
+			x5_map(0, i, j) = 1.0;
+			x10_map(0, i, j) = 1.0;
+		}
+	}
+	for (size_t i = 14; i < 19; i++)
+	{
+		for (size_t j = 0; j < 36; j++)
+		{
+			x0_map(0, i, j) = 1.0;
+			x1_map(0, i, j) = 1.0;
+			x5_map(0, i, j) = 1.0;
+		}
+	}
+	for (size_t i = 19; i < 23; i++)
+	{
+		for (size_t j = 0; j < 36; j++)
+		{
+			x0_map(0, i, j) = 1.0;
+			x1_map(0, i, j) = 1.0;
+		}
+	}
+	for (size_t i = 0; i < 36; i++)
+	{
+		x0_map(0, 23, i) = 1.0;
+	}
+	for (size_t i = 0; i < 4; i++)
+	{
+		label_map(0, i) = 0.0;
+	}
 	inputs.emplace_back(string("batch_size"), batch_size);
 	inputs.emplace_back(string("keep_prob"), keep_prob);
 	inputs.emplace_back(string("x0"), x0);
