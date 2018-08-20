@@ -80,20 +80,22 @@ int main(int argc, char* argv[])
 	vector<pair<string, Tensor>> inputs;
 
 	Tensor batch_size(tensorflow::DT_INT32, TensorShape());
-	batch_size.scalar<int>()() = -1;
+	batch_size.scalar<int>()() = 1;
 
 	Tensor keep_prob(tensorflow::DT_FLOAT, TensorShape());
 	keep_prob.scalar<float>()() = 1.0;
 
-	//PartialTensorShape x0_sp({ -1, 24, 36 });
-	Tensor x0(tensorflow::DT_FLOAT, TensorShape({ -1, 24 ,36 }));
-	Tensor x1(tensorflow::DT_FLOAT, TensorShape({ -1, 23 ,36 }));
-	Tensor x5(tensorflow::DT_FLOAT, TensorShape({ -1, 19 ,36 }));
-	Tensor x10(tensorflow::DT_FLOAT, TensorShape({ -1, 14 ,36 }));
+	//PartialTensorShape x0_sp({ 1, 24, 36 });
+	Tensor x0(tensorflow::DT_FLOAT, TensorShape({ 1, 24 ,36 }));
+	Tensor x1(tensorflow::DT_FLOAT, TensorShape({ 1, 23 ,36 }));
+	Tensor x5(tensorflow::DT_FLOAT, TensorShape({ 1, 19 ,36 }));
+	Tensor x10(tensorflow::DT_FLOAT, TensorShape({ 1, 14 ,36 }));
 
-	Tensor label(tensorflow::DT_FLOAT, TensorShape({ -1, 4 }));
+	Tensor label(tensorflow::DT_FLOAT, TensorShape({ 1, 4 }));
 
 	//input data
+	auto x0_map = x0.tensor<float, 3>();
+	x0_map(0, 0, 0) = 1.1;
 
 	inputs.emplace_back(string("batch_size"), batch_size);
 	inputs.emplace_back(string("keep_prob"), keep_prob);
