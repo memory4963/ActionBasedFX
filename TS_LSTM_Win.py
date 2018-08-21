@@ -176,9 +176,6 @@ if __name__ == '__main__':
             test_label = labels[-test_size:]
             train_accuracy, loss = sess.run([accuracy, cross_entropy], feed_dict={
                 x: test_batch,
-                x1: test_batch[:, 1:] - test_batch[:, :-1],
-                x5: test_batch[:, 5:] - test_batch[:, :-5],
-                x10: test_batch[:, 10:] - test_batch[:, :-10],
                 label: test_label,
                 keep_prob: 1.0,
                 batch_size: test_size
@@ -190,15 +187,9 @@ if __name__ == '__main__':
 
         for j in range(int(skeleton.shape[0] / args.batch_size * 0.8)):
             train_batch = skeleton[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]
-            train_batch1 = skeleton1[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]
-            train_batch5 = skeleton5[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]
-            train_batch10 = skeleton10[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]
             train_label = labels[j * args.batch_size:j * args.batch_size + args.batch_size]
             sess.run(optimizer, feed_dict={
                 x: train_batch,
-                x1: train_batch1,
-                x5: train_batch5,
-                x10: train_batch10,
                 label: train_label,
                 keep_prob: 0.8,
                 batch_size: args.batch_size
