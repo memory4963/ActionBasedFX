@@ -77,13 +77,13 @@ if __name__ == '__main__':
     class_num = labels.shape[1]
 
     # declare placeholders
-    x0 = tf.placeholder(tf.float32, [None, timestep_size, input_size], name='x0')
-    x1 = tf.placeholder(tf.float32, [None, timestep_size - 1, input_size], name='x1')
-    x5 = tf.placeholder(tf.float32, [None, timestep_size - 5, input_size], name='x5')
-    x10 = tf.placeholder(tf.float32, [None, timestep_size - 10, input_size], name='x10')
+    x = tf.placeholder(tf.float32, [None, timestep_size, input_size], name='x0')
+    x1 = x[:, 1:, :] - x[:, :-1, :]
+    x5 = x[:, 5:, :] - x[:, :-5, :]
+    x10 = x[:, 10:, :] - x[:, :-10, :]
     label = tf.placeholder(tf.float32, [None, class_num], name='label')
 
-    x = [x1, x1, x5, x1, x5, x10, x0]
+    inputs = [x1, x1, x5, x1, x5, x10, x]
 
     # network structure
     ts_lstms = [ts_lstm(windows[0]),
@@ -101,7 +101,7 @@ if __name__ == '__main__':
         ts_lstm_output = []
         for j, lstm in enumerate(tslstm):
             lstm_output, _ = tf.nn.dynamic_rnn(lstm,
-                                               x[i][:, j::ts[i], :],
+                                               inputs[i][:, j::ts[i], :],
                                                initial_state=initial_states[i][j])
             ts_lstm_output.append(lstm_output)
         ts_lstms_outputs.append(ts_lstm_output)
@@ -175,7 +175,7 @@ if __name__ == '__main__':
             test_batch = skeleton[-test_size:, :, :]
             test_label = labels[-test_size:]
             train_accuracy, loss = sess.run([accuracy, cross_entropy], feed_dict={
-                x0: test_batch,
+                x: test_batch,
                 x1: test_batch[:, 1:] - test_batch[:, :-1],
                 x5: test_batch[:, 5:] - test_batch[:, :-5],
                 x10: test_batch[:, 10:] - test_batch[:, :-10],
@@ -195,7 +195,7 @@ if __name__ == '__main__':
             train_batch10 = skeleton10[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]
             train_label = labels[j * args.batch_size:j * args.batch_size + args.batch_size]
             sess.run(optimizer, feed_dict={
-                x0: train_batch,
+                x: train_batch,
                 x1: train_batch1,
                 x5: train_batch5,
                 x10: train_batch10,
