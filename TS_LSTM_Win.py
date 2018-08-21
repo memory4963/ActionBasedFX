@@ -77,7 +77,7 @@ if __name__ == '__main__':
     class_num = labels.shape[1]
 
     # declare placeholders
-    x = tf.placeholder(tf.float32, [None, timestep_size, input_size], name='x0')
+    x = tf.placeholder(tf.float32, [None, timestep_size, input_size], name='x')
     x1 = x[:, 1:, :] - x[:, :-1, :]
     x5 = x[:, 5:, :] - x[:, :-5, :]
     x10 = x[:, 10:, :] - x[:, :-10, :]
@@ -184,6 +184,8 @@ if __name__ == '__main__':
         if (i + i) % 100 == 0:
             # save
             saver.save(sess, args.output_path + 'model_' + str(i) + '.ckpt')
+            tf.saved_model.simple_save(sess, args.output_path + 'saved_model_' + str(i),
+                                   inputs={'x': x, 'batch_size': batch_size, 'keep_prob': keep_prob}, outputs={'y': y})
 
         for j in range(int(skeleton.shape[0] / args.batch_size * 0.8)):
             train_batch = skeleton[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]

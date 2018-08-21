@@ -2,7 +2,7 @@ import tensorflow as tf
 # import numpy as np
 
 if __name__ == '__main__':
-    with tf.Session as sess:
+    with tf.Session() as sess:
         saver = tf.train.import_meta_graph('D:\\ActionBasedFX\\origin_output\\model_950.ckpt.meta')
         saver.restore(sess, tf.train.latest_checkpoint('D:\\ActionBasedFX\\origin_output\\'))
 
