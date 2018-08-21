@@ -161,7 +161,7 @@ if __name__ == '__main__':
     correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(label, 1))
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"), name='accuracy')
 
-    config = tf.ConfigProto(log_device_placement=True)
+    config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
     sess.run(tf.global_variables_initializer())
