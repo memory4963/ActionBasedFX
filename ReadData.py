@@ -107,18 +107,15 @@ def read_data_norm(path, size=0):
     labels = label_temp[1:]
     skeleton = skeleton_temp[1:, :]
     length = np.sqrt(np.add(np.square(skeleton[:, 2] - skeleton[:, 0]), np.square(skeleton[:, 3] - skeleton[:, 1])))
-    # length = 0 则设为1 (仅当0点和1点都未检测出)
     for l in range(length.size):
         if length[l] <= 0.001:
             length[l] = 1
     for i in range(2, skeleton.shape[1], 2):
         skeleton[:, i] = (skeleton[:, i] - skeleton[:, 0]) / length
         skeleton[:, i + 1] = (skeleton[:, i + 1] - skeleton[:, 1]) / length
-    # 0点设为(0, 0)
     for i in skeleton:
         i[0] = 0.0
         i[1] = 0.0
-    # 未检测出的点不处理
     skeleton = skeleton.reshape([-1, data_length, 36])
     np.save(path + "/skeleton.npy", skeleton)
     np.save(path + "/labels.npy", labels)
