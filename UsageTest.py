@@ -7,15 +7,16 @@ if __name__ == '__main__':
         saver.restore(sess, tf.train.latest_checkpoint('D:\\ActionBasedFX\\origin_output\\'))
 
         graph = tf.get_default_graph()
-        x0 = graph.get_tensor_by_name('x0:0')
-        x1 = graph.get_tensor_by_name('x1:0')
-        x5 = graph.get_tensor_by_name('x5:0')
-        x10 = graph.get_tensor_by_name('x10:0')
+        x = graph.get_tensor_by_name('x:0')
         batch_size = graph.get_tensor_by_name('batch_size:0')
         keep_prob = graph.get_tensor_by_name('keep_prob:0')
         y = graph.get_tensor_by_name('y:0')
 
-        tf.saved_model.simple_save(sess, 'D:\\ActionBasedFX\\origin_output\\saved_model',
-                                   inputs={'x0': x0, 'x1': x1, 'x5': x5, 'x10': x10,
-                                           'batch_size': batch_size, 'keep_prob': keep_prob},
-                                   outputs={'y': y})
+        builder = tf.saved_model.builder.SavedModelBuilder('D:\\ActionBasedFX\\origin_output\\saved_model')
+        input_dict = {'x': tf.saved_model.utils.build_tensor_info(x),
+                      'batch_size': tf.saved_model.utils.build_tensor_info(batch_size),
+                      'keep_prob': tf.saved_model.utils.build_tensor_info(keep_prob)}
+        output_dict = {'y': tf.saved_model.utils.build_tensor_info(y)}
+        signature = tf.saved_model.signature_def_utils.build_signature_def(input_dict, output_dict, 'ts_predict')
+        builder.add_meta_graph_and_variables(sess, ['TS_LSTM'], {'predict_sig': signature})
+        builder.save()

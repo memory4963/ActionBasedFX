@@ -184,8 +184,14 @@ if __name__ == '__main__':
         if (i + i) % 100 == 0:
             # save
             saver.save(sess, args.output_path + 'model_' + str(i) + '.ckpt')
-            tf.saved_model.simple_save(sess, args.output_path + 'saved_model_' + str(i),
-                                   inputs={'x': x, 'batch_size': batch_size, 'keep_prob': keep_prob}, outputs={'y': y})
+            builder = tf.saved_model.builder.SavedModelBuilder(args.output_path + 'saved_model_' + str(i))
+            input_dict = {'x': tf.saved_model.utils.build_tensor_info(x),
+                          'batch_size': tf.saved_model.utils.build_tensor_info(batch_size),
+                          'keep_prob': tf.saved_model.utils.build_tensor_info(keep_prob)}
+            output_dict = {'y': tf.saved_model.utils.build_tensor_info(y)}
+            signature = tf.saved_model.signature_def_utils.build_signature_def(input_dict, output_dict, 'ts_predict')
+            builder.add_meta_graph_and_variables(sess, ['TS_LSTM'], {'predict_sig': signature})
+            builder.save()
 
         for j in range(int(skeleton.shape[0] / args.batch_size * 0.8)):
             train_batch = skeleton[j * args.batch_size:j * args.batch_size + args.batch_size, :, :]

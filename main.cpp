@@ -87,62 +87,30 @@ int main(int argc, char* argv[])
 	keep_prob.scalar<float>()() = 1.0;
 
 	//PartialTensorShape x0_sp({ 1, 24, 36 });
-	Tensor x0(tensorflow::DT_FLOAT, TensorShape({ 1, 24 ,36 }));
-	Tensor x1(tensorflow::DT_FLOAT, TensorShape({ 1, 23 ,36 }));
-	Tensor x5(tensorflow::DT_FLOAT, TensorShape({ 1, 19 ,36 }));
-	Tensor x10(tensorflow::DT_FLOAT, TensorShape({ 1, 14 ,36 }));
+	Tensor x(tensorflow::DT_FLOAT, TensorShape({ 1, 24 ,36 }));
 
-	Tensor label(tensorflow::DT_FLOAT, TensorShape({ 1, 4 }));
+	//Tensor label(tensorflow::DT_FLOAT, TensorShape({ 1, 4 }));
 
 	//input data
-	auto x0_map = x0.tensor<float, 3>();
-	auto x1_map = x0.tensor<float, 3>();
-	auto x5_map = x0.tensor<float, 3>();
-	auto x10_map = x0.tensor<float, 3>();
-	auto label_map = label.tensor<float, 2>();
+	auto x_map = x.tensor<float, 3>();
+	//auto label_map = label.tensor<float, 2>();
 
-	for (size_t i = 0; i < 14; i++)
+	for (size_t i = 0; i < 24; i++)
 	{
 		for (size_t j = 0; j < 36; j++)
 		{
-			x0_map(0, i, j) = 1.0;
-			x1_map(0, i, j) = 1.0;
-			x5_map(0, i, j) = 1.0;
-			x10_map(0, i, j) = 1.0;
+			x_map(0, i, j) = 1.0;
 		}
 	}
-	for (size_t i = 14; i < 19; i++)
-	{
-		for (size_t j = 0; j < 36; j++)
-		{
-			x0_map(0, i, j) = 1.0;
-			x1_map(0, i, j) = 1.0;
-			x5_map(0, i, j) = 1.0;
-		}
-	}
-	for (size_t i = 19; i < 23; i++)
-	{
-		for (size_t j = 0; j < 36; j++)
-		{
-			x0_map(0, i, j) = 1.0;
-			x1_map(0, i, j) = 1.0;
-		}
-	}
-	for (size_t i = 0; i < 36; i++)
-	{
-		x0_map(0, 23, i) = 1.0;
-	}
-	for (size_t i = 0; i < 4; i++)
-	{
-		label_map(0, i) = 0.0;
-	}
+	//for (size_t i = 0; i < 4; i++)
+	//{
+	//	label_map(0, i) = 0.0;
+	//}
 	inputs.emplace_back(string("batch_size"), batch_size);
 	inputs.emplace_back(string("keep_prob"), keep_prob);
-	inputs.emplace_back(string("x0"), x0);
-	inputs.emplace_back(string("x1"), x1);
-	inputs.emplace_back(string("x5"), x5);
-	inputs.emplace_back(string("x10"), x10);
-	inputs.emplace_back(string("label"), label);
+	inputs.emplace_back(string("x"), x);
+	//inputs.emplace_back(string("label"), label);
+
 	//  构造模型的输入，相当与python版本中的feed
 	//std::vector<std::pair<string, Tensor>> input;
 	//tensorflow::TensorShape inputshape;
