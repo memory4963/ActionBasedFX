@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import tensorflow as tf
 from tensorflow.contrib import rnn
 import ReadData
@@ -161,18 +162,21 @@ if __name__ == '__main__':
 
 def process_data(skeletons):
     this_outputs = sess.run(y, feed_dict={
-        skeletons: skeletons,
+        x: skeletons,
         keep_prob: 1.0,
         batch_size: skeletons.shape[0]
     })
     out_path = 'D:\\label.dat'
     this_outputs = np.argmax(this_outputs, axis=1)
+    print('get output for data ' + str(cnt) + ', the label is ' + str(this_outputs[0]))
     while os.path.exists(out_path):
         continue
     outfile = open(out_path, 'w')
-    outfile.write(str(this_outputs[0]))
+    for label in this_outputs:
+        outfile.write(str(label))
+        outfile.write('\n')
     outfile.close()
-    print('output for data ' + str(cnt) + ', the label is ' + str(this_outputs[0]))
+    print('output')
 
 
 path = 'D:\\test.dat'

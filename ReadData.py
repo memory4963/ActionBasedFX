@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import random
 import numpy as np
 import os
@@ -161,7 +162,4 @@ def read_data_test(path, size=0):
 
 def read_single_file(path):
     # 1 3 9 12
-    file_data = np.loadtxt(path, np.float32)
-    skeleton = file_data
-    skeleton = skeleton.reshape([-1, data_length, 36])
-    return skeleton
+    return np.loadtxt(path, np.float32)[np.newaxis, :]
