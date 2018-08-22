@@ -172,17 +172,19 @@ def process_data(skeletons):
     outfile = open(out_path, 'w')
     outfile.write(str(this_outputs[0]))
     outfile.close()
+    print('output for data ' + str(cnt) + ', the label is ' + str(this_outputs[0]))
 
 
 path = 'D:\\test.dat'
+cnt = 0
 while 1:
     while not os.path.exists(path):
         continue
-
     skeleton = ReadData.read_single_file(path)
+    cnt += 1
+    print('get data ' + str(cnt))
     os.remove(path)
     process_data(skeleton)
-
 
 # print("please input path of file. input 'exit' to exit\n")
 # path = sys.stdin.readline()
