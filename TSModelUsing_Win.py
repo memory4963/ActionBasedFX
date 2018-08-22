@@ -178,7 +178,7 @@ def process_data(skeletons):
 path = 'D:\\test.dat'
 cnt = 0
 while 1:
-    while not os.path.exists(path):
+    while (not os.path.exists(path)) or (not os.path.getsize(path)):
         continue
     skeleton = ReadData.read_single_file(path)
     cnt += 1
