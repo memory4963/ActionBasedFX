@@ -157,3 +157,11 @@ def read_data_test(path, size=0):
     # np.save(path + "/skeleton.npy", skeleton)
     # np.save(path + "/labels.npy", names)
     return skeleton, names
+
+
+def read_single_file(path):
+    # 1 3 9 12
+    file_data = np.loadtxt(path, np.float32)
+    skeleton = file_data
+    skeleton = skeleton.reshape([-1, data_length, 36])
+    return skeleton

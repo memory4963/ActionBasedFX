@@ -74,12 +74,12 @@ if __name__ == '__main__':
     # tf.reset_default_graph()
 
     # declare placeholders
-    x0 = tf.placeholder(tf.float32, [None, timestep_size, input_size], name="x0")
-    x1 = tf.placeholder(tf.float32, [None, timestep_size - 1, input_size], name="x1")
-    x5 = tf.placeholder(tf.float32, [None, timestep_size - 5, input_size], name="x5")
-    x10 = tf.placeholder(tf.float32, [None, timestep_size - 10, input_size], name="x10")
+    x = tf.placeholder(tf.float32, [None, timestep_size, input_size], name="x")
+    x1 = x[:, 1:, :] - x[:, :-1, :]
+    x5 = x[:, 5:, :] - x[:, :-5, :]
+    x10 = x[:, 10:, :] - x[:, :-10, :]
 
-    x = [x1, x1, x5, x1, x5, x10, x0]
+    inputs = [x1, x1, x5, x1, x5, x10, x]
 
     # network structure
     ts_lstms = [ts_lstm(windows[0]),
@@ -97,7 +97,7 @@ if __name__ == '__main__':
         ts_lstm_output = []
         for j, lstm in enumerate(tslstm):
             lstm_output, _ = tf.nn.dynamic_rnn(lstm,
-                                               x[i][:, j::ts[i], :],
+                                               inputs[i][:, j::ts[i], :],
                                                initial_state=initial_states[i][j])
             ts_lstm_output.append(lstm_output)
         ts_lstms_outputs.append(ts_lstm_output)
@@ -158,32 +158,31 @@ if __name__ == '__main__':
     saver = tf.train.Saver()
     saver.restore(sess, "D:\\ActionBasedFX\\origin_output\\model_950.ckpt")
 
-    tf.saved_model.simple_save(sess, 'D:\\ActionBasedFX\\origin_output\\saved_model',
-                               inputs={'x0': x0, 'x1': x1, 'x5': x5, 'x10': x10,
-                                       'batch_size': batch_size, 'keep_prob': keep_prob},
-                               outputs={'y': y})
 
-# def process_data(inputs, labels):
-#     this_outputs = sess.run(y, feed_dict={
-#         x0: inputs,
-#         x1: inputs[:, 1:] - inputs[:, :-1],
-#         x5: inputs[:, 5:] - inputs[:, :-5],
-#         x10: inputs[:, 10:] - inputs[:, :-10],
-#         keep_prob: 1.0,
-#         batch_size: inputs.shape[0]
-#     })
-#     this_outputs = np.argmax(this_outputs, axis=1)
-#     for i in range(this_outputs.shape[0]):
-#         if this_outputs[i] == 0:
-#             this_type = 'marking time and knee lifting. a1'
-#         elif this_outputs[i] == 1:
-#             this_type = 'squatting. a3'
-#         elif this_outputs[i] == 2:
-#             this_type = 'rotation clapping. a9'
-#         else:
-#             this_type = 'punching. a12'
-#         print('name: ' + labels[i] + ', type: ' + this_type + '\n')
-#
+def process_data(skeletons):
+    this_outputs = sess.run(y, feed_dict={
+        skeletons: skeletons,
+        keep_prob: 1.0,
+        batch_size: skeletons.shape[0]
+    })
+    out_path = 'D:\\label.dat'
+    this_outputs = np.argmax(this_outputs, axis=1)
+    while os.path.exists(out_path):
+        continue
+    outfile = open(out_path, 'w')
+    outfile.write(str(this_outputs[0]))
+    outfile.close()
+
+
+path = 'D:\\test.dat'
+while 1:
+    while not os.path.exists(path):
+        continue
+
+    skeleton = ReadData.read_single_file(path)
+    os.remove(path)
+    process_data(skeleton)
+
 
 # print("please input path of file. input 'exit' to exit\n")
 # path = sys.stdin.readline()
