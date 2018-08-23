@@ -97,9 +97,9 @@ saver = tf.train.Saver()
 for i in range(1000):
     if (i + 1) % 20 == 0:
         # test accuracy
-        j = int(float(i) / 1000 * skeleton.shape[0] / _batch_size - 1)
-        test_batch = skeleton[j * _batch_size:j * _batch_size + _batch_size, :, :]
-        test_labels = labels[j * _batch_size:j * _batch_size + _batch_size]
+        test_size = int(skeleton.shape[0] * 0.2)
+        test_batch = skeleton[-test_size:, :, :]
+        test_labels = labels[-test_size:]
         summary, train_accuracy, loss = sess.run([merged, accuracy, cross_entropy], feed_dict={
             x: test_batch, label: test_labels,
             keep_prob: 1.0, batch_size: _batch_size
@@ -111,7 +111,7 @@ for i in range(1000):
         saver.save(sess, output_path + "/model_" + str(i) + ".ckpt")
 
     train_test_int = random.randint(0, skeleton.shape[0] / _batch_size)
-    for j in range(skeleton.shape[0] / _batch_size):
+    for j in range(int(skeleton.shape[0] * 0.8 / _batch_size)):
         train_batch = skeleton[j * _batch_size:j * _batch_size + _batch_size, :, :]
         train_labels = labels[j * _batch_size:j * _batch_size + _batch_size]
         summary, _ = sess.run([merged, optimizer], feed_dict={
