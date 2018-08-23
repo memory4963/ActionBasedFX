@@ -71,7 +71,7 @@ if __name__ == '__main__':
     # tf.reset_default_graph()
 
     # load data set
-    skeleton, labels = ReadData.read_data_norm("D:\\DataSet", args.dataset_size)
+    skeleton, labels = ReadData.read_data("D:\\DataSet", args.dataset_size)
     skeleton1 = skeleton[:, 1:, :] - skeleton[:, :-1, :]
     skeleton5 = skeleton[:, 5:, :] - skeleton[:, :-5, :]
     skeleton10 = skeleton[:, 10:, :] - skeleton[:, :-10, :]
