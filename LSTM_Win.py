@@ -102,7 +102,7 @@ for i in range(1000):
         test_labels = labels[-test_size:]
         summary, train_accuracy, loss = sess.run([merged, accuracy, cross_entropy], feed_dict={
             x: test_batch, label: test_labels,
-            keep_prob: 1.0, batch_size: _batch_size
+            keep_prob: 1.0, batch_size: test_size
         })
         test_writer.add_summary(summary, int(i * skeleton.shape[0] / _batch_size))
         print("train step %d, accuracy: %f, loss:%f" % (i, train_accuracy, loss))
