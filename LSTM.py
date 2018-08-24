@@ -102,15 +102,15 @@ for i in range(1000):
         test_labels = labels[-test_size:]
         summary, train_accuracy, loss = sess.run([merged, accuracy, cross_entropy], feed_dict={
             x: test_batch, label: test_labels,
-            keep_prob: 1.0, batch_size: _batch_size
+            keep_prob: 1.0, batch_size: test_size
         })
-        test_writer.add_summary(summary, i * skeleton.shape[0] / _batch_size)
+        test_writer.add_summary(summary, int(i * skeleton.shape[0] / _batch_size))
         print("train step %d, accuracy: %f, loss:%f" % (i, train_accuracy, loss))
     if (i + 1) % 100 == 0:
         # save
         saver.save(sess, output_path + "/model_" + str(i) + ".ckpt")
 
-    train_test_int = random.randint(0, skeleton.shape[0] / _batch_size)
+    train_test_int = random.randint(0, int(skeleton.shape[0] / _batch_size))
     for j in range(int(skeleton.shape[0] * 0.8 / _batch_size)):
         train_batch = skeleton[j * _batch_size:j * _batch_size + _batch_size, :, :]
         train_labels = labels[j * _batch_size:j * _batch_size + _batch_size]
@@ -119,4 +119,4 @@ for i in range(1000):
             keep_prob: 0.8, batch_size: _batch_size
         })
         if j == train_test_int:
-            train_writer.add_summary(summary, i * skeleton.shape[0] / _batch_size + j)
+            train_writer.add_summary(summary, int(i * skeleton.shape[0] / _batch_size + j))
