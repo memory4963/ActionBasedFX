@@ -10,17 +10,16 @@ timestep_size = ReadData.data_length
 batch_size = tf.placeholder(tf.int32, [], name='batch_size')
 
 hidden_size = 256
-layer_num = 2
 keep_prob = tf.placeholder(tf.float32, [], name='keep_prob')
 
-# TS-LSTM networks. set time step to 36
-# 0: hidden 128 D 1  W 8  TS 8
-# 1: hidden 64  D 1  W 20 TS 15
-# 2: hidden 64  D 5  W 16 TS 15
-# 3: hidden 32  D 1  W 35 TS -
-# 4: hidden 32  D 5  W 32 TS -
-# 5: hidden 32  D 10 W 28 TS -
-# 6: hidden 64  D 0  W 16 TS 8
+# TS-LSTM networks. set time step to 24
+# 0: hidden 256 D 1  W 5  TS 5
+# 1: hidden 256 D 1  W 11 TS 11
+# 2: hidden 256 D 5  W 9  TS 9
+# 3: hidden 256 D 1  W 23 TS -
+# 4: hidden 256 D 5  W 19 TS -
+# 5: hidden 256 D 10 W 14 TS -
+# 6: hidden 256 D 0  W 12 TS 12
 # input0->(TS-LSTM0)->(SumPool)->(Linear)->(Dropout)->(SoftMax)->Softmax0
 #
 # input1->(TS-LSTM1)->(SumPool)-\
@@ -122,10 +121,7 @@ if __name__ == '__main__':
 
     # Concat [4, batch_size, *]
     # * = [data_length, 2*data_length, 3*data_length, data_length]
-    concats = [pools[0]]
-    concats.append(tf.concat([pools[1], pools[2]], 1))
-    concats.append(tf.concat([pools[3], pools[4], pools[5]], 1))
-    concats.append(pools[6])
+    concats = [pools[0], tf.concat([pools[1], pools[2]], 1), tf.concat([pools[3], pools[4], pools[5]], 1), pools[6]]
 
     # Linear [4, batch_size, linear_size]
     weights = [Utils.weight_variable([concats[i].shape[1].value, linear_size[i]]) for i in range(4)]
@@ -143,16 +139,16 @@ if __name__ == '__main__':
 
     # Full Connection
     concat_size = sum(linear_size)
-    fc_weights = Utils.weight_variable([int(concat_size), int(concat_size/ 4)])
-    fc_bias = Utils.bias_variable([int(concat_size/ 4)])
+    fc_weights = Utils.weight_variable([int(concat_size), int(concat_size / 4)])
+    fc_bias = Utils.bias_variable([int(concat_size / 4)])
     fc = tf.nn.relu(tf.add(tf.matmul(concat, fc_weights), fc_bias))
 
-    fc_weights = Utils.weight_variable([int(concat_size/ 4), int(concat_size/ 16)])
-    fc_bias = Utils.bias_variable([int(concat_size/ 16)])
+    fc_weights = Utils.weight_variable([int(concat_size / 4), int(concat_size / 16)])
+    fc_bias = Utils.bias_variable([int(concat_size / 16)])
     fc = tf.nn.relu(tf.add(tf.matmul(fc, fc_weights), fc_bias))
 
     # Softmax
-    sm_weights = Utils.weight_variable([int(concat_size/ 16), class_num])
+    sm_weights = Utils.weight_variable([int(concat_size / 16), class_num])
     sm_bias = Utils.bias_variable([class_num])
     y = tf.nn.softmax(tf.add(tf.matmul(fc, sm_weights), sm_bias), name='y')
 
