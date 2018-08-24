@@ -71,9 +71,6 @@ if __name__ == '__main__':
 
     # load data set
     skeleton, labels = ReadData.read_data("/home/luoao/openpose/dataset/simpleOutput", args.dataset_size)
-    skeleton1 = skeleton[:, 1:, :] - skeleton[:, :-1, :]
-    skeleton5 = skeleton[:, 5:, :] - skeleton[:, :-5, :]
-    skeleton10 = skeleton[:, 10:, :] - skeleton[:, :-10, :]
     class_num = labels.shape[1]
 
     # declare placeholders
@@ -121,10 +118,7 @@ if __name__ == '__main__':
 
     # Concat [4, batch_size, *]
     # * = [data_length, 2*data_length, 3*data_length, data_length]
-    concats = [pools[0]]
-    concats.append(tf.concat([pools[1], pools[2]], 1))
-    concats.append(tf.concat([pools[3], pools[4], pools[5]], 1))
-    concats.append(pools[6])
+    concats = [pools[0], tf.concat([pools[1], pools[2]], 1), tf.concat([pools[3], pools[4], pools[5]], 1), pools[6]]
 
     # Linear [4, batch_size, linear_size]
     weights = [Utils.weight_variable([concats[i].shape[1].value, linear_size[i]]) for i in range(4)]
